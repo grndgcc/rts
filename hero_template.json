@@ -1,0 +1,30 @@
+{
+  "new_hero_id": {
+    "display_name": "New Hero Name",
+    "faction": "elf_kingdom",
+    "role": "commander",
+    "cost": {"gold": 1500},
+    "revive_cost": {"gold": 800},
+    "build_time": 35,
+    "unique": true,
+    "stats": {
+      "hp": 1600,
+      "armor": 6,
+      "attack_modifier": 6,
+      "defence_modifier": 4,
+      "damage_die": "d10",
+      "armor_die": "d8",
+      "attack_speed": 1.0,
+      "range": 45,
+      "crit_rate": 18,
+      "speed": 65,
+      "charge_damage": 12,
+      "vision": 520,
+      "command_cost": 0
+    },
+    "tags": ["hero", "infantry", "melee"],
+    "abilities": ["blade_arc", "commanding_shout", "silver_guard"],
+    "passive": null,
+    "ultimate": "queen_of_the_field"
+  }
+}

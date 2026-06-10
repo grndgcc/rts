@@ -1,0 +1,49 @@
+{
+  "kingdom_of_darkness": {
+    "display_name": "Kingdom of Darkness",
+    "color": "#7d2424",
+    "playstyle": "swarm_and_terror",
+    "heroes": ["orc_champion", "dark_lord", "dragon"],
+    "modifiers": {
+      "infantry_cost_mult": 0.85,
+      "infantry_build_time_mult": 0.9,
+      "siege_damage_mult": 1.1
+    }
+  },
+  "elf_kingdom": {
+    "display_name": "Elf Kingdom",
+    "color": "#4db67f",
+    "playstyle": "elite_precision",
+    "heroes": ["eldarenth", "solis", "anarion"],
+    "modifiers": {
+      "ranged_attack_modifier_add": 1,
+      "vision_mult": 1.15,
+      "unit_cost_mult": 1.08,
+      "hero_ability_cooldown_mult": 0.94
+    }
+  },
+  "iron_kingdom": {
+    "display_name": "Iron Kingdom",
+    "color": "#b8a169",
+    "playstyle": "balanced_fortress",
+    "heroes": ["maime_lionhart", "robert_the_devil", "arya_mtark"],
+    "modifiers": {
+      "building_hp_mult": 1.15,
+      "resource_income_mult": 1.08,
+      "heavy_infantry_defence_modifier_add": 1,
+      "heavy_cavalry_charge_damage_add": 4
+    }
+  },
+  "tokrasi": {
+    "display_name": "Tokrasi",
+    "color": "#7d71d9",
+    "playstyle": "magic_control",
+    "heroes": ["dark_mage", "white_mage", "grey_mage"],
+    "modifiers": {
+      "research_cost_mult": 0.9,
+      "hero_mana_regen_mult": 1.25,
+      "ability_area_mult": 1.1,
+      "basic_unit_hp_mult": 0.95
+    }
+  }
+}

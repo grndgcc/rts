@@ -1,0 +1,25 @@
+{
+  "new_unit_id": {
+    "display_name": "New Unit Name",
+    "category": "infantry",
+    "battalion_size": 20,
+    "cost": {"gold": 300},
+    "build_time": 18,
+    "stats": {
+      "hp": 50,
+      "armor": 4,
+      "attack_modifier": 2,
+      "defence_modifier": 2,
+      "damage_die": "d6",
+      "armor_die": "d6",
+      "attack_speed": 1.2,
+      "range": 35,
+      "crit_rate": 18,
+      "speed": 50,
+      "charge_damage": 5,
+      "vision": 380,
+      "command_cost": 1
+    },
+    "tags": ["infantry", "melee"]
+  }
+}

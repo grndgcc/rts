@@ -1,0 +1,46 @@
+{
+  "eldarenth_leadership": {
+    "display_name": "Eldarenth Leadership",
+    "scope": "aura",
+    "radius": 340,
+    "duration": "permanent",
+    "effects": {"defence_modifier_add": 1, "speed_mult": 1.08},
+    "conditions": {"target_owner": "ally", "target_tags_any": ["infantry", "cavalry", "ranged"]}
+  },
+  "commanding_shout_buff": {
+    "display_name": "Commanding Shout",
+    "scope": "temporary",
+    "duration": 12,
+    "effects": {"attack_modifier_add": 2, "defence_modifier_add": 1}
+  },
+  "queen_of_the_field_buff": {
+    "display_name": "Queen of the Field",
+    "scope": "temporary",
+    "duration": 14,
+    "effects": {"attack_modifier_add": 3, "defence_modifier_add": 3, "stun_immunity": true}
+  },
+  "orc_warcry_buff": {
+    "display_name": "Orc Warcry",
+    "scope": "temporary",
+    "duration": 10,
+    "effects": {"attack_modifier_add": 2, "speed_mult": 1.12}
+  },
+  "holy_barrier_buff": {
+    "display_name": "Holy Barrier",
+    "scope": "temporary",
+    "duration": 10,
+    "effects": {"defence_modifier_add": 3, "armor_die_upgrade": 1}
+  },
+  "dark_curse_debuff": {
+    "display_name": "Dark Curse",
+    "scope": "temporary",
+    "duration": 12,
+    "effects": {"defence_modifier_add": -2, "speed_mult": 0.82}
+  },
+  "veteran_drills_buff": {
+    "display_name": "Veteran Drills",
+    "scope": "research",
+    "duration": "permanent",
+    "effects": {"attack_modifier_add": 1}
+  }
+}

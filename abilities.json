@@ -1,0 +1,114 @@
+{
+  "blade_arc": {
+    "display_name": "Blade Arc",
+    "hotkey": "Q",
+    "type": "active",
+    "targeting": "area_enemy",
+    "range": 115,
+    "radius": 120,
+    "cooldown": 18,
+    "effects": [{"type": "area_damage", "damage_die": "d10", "attack_modifier": 6, "damage_multiplier": 10}]
+  },
+  "commanding_shout": {
+    "display_name": "Commanding Shout",
+    "hotkey": "W",
+    "type": "active",
+    "targeting": "aura_self",
+    "radius": 360,
+    "cooldown": 35,
+    "effects": [{"type": "apply_modifier", "modifier": "commanding_shout_buff"}]
+  },
+  "silver_guard": {
+    "display_name": "Silver Guard",
+    "hotkey": "E",
+    "type": "active",
+    "targeting": "aura_self",
+    "radius": 260,
+    "cooldown": 42,
+    "effects": [{"type": "apply_modifier", "modifier": "holy_barrier_buff"}]
+  },
+  "queen_of_the_field": {
+    "display_name": "Queen of the Field",
+    "hotkey": "R",
+    "type": "ultimate",
+    "targeting": "aura_self",
+    "radius": 520,
+    "cooldown": 160,
+    "effects": [{"type": "apply_modifier", "modifier": "queen_of_the_field_buff"}]
+  },
+  "twin_slash": {
+    "display_name": "Twin Slash",
+    "hotkey": "Q",
+    "type": "active",
+    "targeting": "single_enemy",
+    "range": 70,
+    "cooldown": 15,
+    "effects": [{"type": "single_damage", "damage_die": "d12", "attack_modifier": 8, "damage_multiplier": 14}]
+  },
+  "wind_step": {
+    "display_name": "Wind Step",
+    "hotkey": "W",
+    "type": "active",
+    "targeting": "self",
+    "cooldown": 28,
+    "effects": [{"type": "self_dash", "distance": 170}, {"type": "apply_modifier", "modifier": "holy_barrier_buff", "self_only": true}]
+  },
+  "rain_of_arrows": {
+    "display_name": "Rain of Arrows",
+    "hotkey": "Q",
+    "type": "active",
+    "targeting": "ground",
+    "range": 520,
+    "radius": 180,
+    "cooldown": 32,
+    "effects": [{"type": "area_damage", "damage_die": "d8", "attack_modifier": 5, "damage_multiplier": 9}]
+  },
+  "dark_curse": {
+    "display_name": "Dark Curse",
+    "hotkey": "Q",
+    "type": "active",
+    "targeting": "area_enemy",
+    "range": 420,
+    "radius": 220,
+    "cooldown": 38,
+    "effects": [{"type": "apply_modifier_enemy", "modifier": "dark_curse_debuff"}]
+  },
+  "fire_burst": {
+    "display_name": "Fire Burst",
+    "hotkey": "W",
+    "type": "active",
+    "targeting": "ground",
+    "range": 430,
+    "radius": 150,
+    "cooldown": 30,
+    "effects": [{"type": "area_damage", "damage_die": "d12", "attack_modifier": 5, "damage_multiplier": 10}]
+  },
+  "heal_field": {
+    "display_name": "Heal Field",
+    "hotkey": "E",
+    "type": "active",
+    "targeting": "aura_self",
+    "radius": 340,
+    "cooldown": 42,
+    "effects": [{"type": "heal_allies", "amount": 260}]
+  },
+  "arcane_storm": {
+    "display_name": "Arcane Storm",
+    "hotkey": "R",
+    "type": "ultimate",
+    "targeting": "ground",
+    "range": 520,
+    "radius": 260,
+    "cooldown": 170,
+    "effects": [{"type": "area_damage", "damage_die": "d12", "attack_modifier": 8, "damage_multiplier": 18}]
+  },
+  "warcry": {
+    "display_name": "Warcry",
+    "hotkey": "Q",
+    "type": "active",
+    "targeting": "aura_self",
+    "radius": 330,
+    "cooldown": 30,
+    "effects": [{"type": "apply_modifier", "modifier": "orc_warcry_buff"}]
+  }
+}

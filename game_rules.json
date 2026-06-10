@@ -1,0 +1,38 @@
+{
+  "simulation": {
+    "ticks_per_second": 30,
+    "base_dr": 12,
+    "seed": 1337
+  },
+  "combat": {
+    "counter_damage_multiplier": 2,
+    "attack_crit_damage_multiplier": 2,
+    "crit_fail_stun_seconds": 2,
+    "defence_crit_stun_seconds": 2,
+    "minimum_damage": 1,
+    "charge_speed_damage_scale": 0.12
+  },
+  "battalions": {
+    "default_size": 20,
+    "formation_spacing": 12,
+    "attacks_per_full_battalion": 4
+  },
+  "buildings": {
+    "base_slots_per_base": 8,
+    "wall_tower_slots_per_base": 8,
+    "repair_discount": 0.55,
+    "normal_buildings_attack_only_at_level": 3,
+    "guard_towers_always_attack": true
+  },
+  "heroes": {
+    "unique_per_player": true,
+    "max_heroes_per_faction": 3,
+    "revive_enabled": true
+  },
+  "resources": {
+    "starting_gold": 3000,
+    "starting_command_limit": 100,
+    "max_command_limit": 300,
+    "base_gold_per_minute": 450
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "new_faction_id": {
+    "display_name": "New Faction Name",
+    "color": "#66aaee",
+    "playstyle": "balanced",
+    "heroes": ["new_hero_id"],
+    "modifiers": {
+      "resource_income_mult": 1.0,
+      "unit_cost_mult": 1.0
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "duel_plains": {
+    "id": "duel_plains",
+    "display_name": "Duel Plains",
+    "size": {"width": 3200, "height": 2200},
+    "players": 2,
+    "starting_bases": [
+      {"player_slot": 1, "position": {"x": 520, "y": 1100}, "base_slots": 8, "wall_tower_slots": 8},
+      {"player_slot": 2, "position": {"x": 2680, "y": 1100}, "base_slots": 8, "wall_tower_slots": 8}
+    ],
+    "neutral_settlements": [
+      {"id": "central_ruins", "position": {"x": 1600, "y": 1100}, "capture_radius": 170, "base_slots": 4}
+    ],
+    "resource_outposts": [
+      {"id": "north_mine", "position": {"x": 1600, "y": 420}, "capture_radius": 125, "income": {"gold_per_minute": 180}},
+      {"id": "south_mine", "position": {"x": 1600, "y": 1780}, "capture_radius": 125, "income": {"gold_per_minute": 180}}
+    ],
+    "decor": [
+      {"type": "forest", "x": 920, "y": 400, "r": 180},
+      {"type": "forest", "x": 2280, "y": 1780, "r": 190},
+      {"type": "hill", "x": 1600, "y": 1100, "r": 250}
+    ]
+  }
+}

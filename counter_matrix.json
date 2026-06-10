@@ -1,0 +1,14 @@
+{
+  "heavy_infantry": ["skirmisher", "archer", "spear_thrower"],
+  "skirmisher": ["pikeman", "crossbowman", "siege"],
+  "pikeman": ["light_cavalry", "heavy_cavalry", "cavalry_archer"],
+  "archer": ["skirmisher", "pikeman"],
+  "crossbowman": ["heavy_infantry", "heavy_cavalry", "hero"],
+  "spear_thrower": ["light_cavalry", "cavalry_archer", "monster"],
+  "light_cavalry": ["archer", "crossbowman", "siege"],
+  "heavy_cavalry": ["heavy_infantry", "skirmisher", "archer"],
+  "cavalry_archer": ["pikeman", "heavy_infantry"],
+  "scorpion": ["heavy_infantry", "pikeman", "hero"],
+  "catapult": ["archer", "crossbowman", "building"],
+  "trebuchet": ["wall", "tower", "building"]
+}

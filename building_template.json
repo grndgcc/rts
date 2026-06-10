@@ -1,0 +1,16 @@
+{
+  "new_building_id": {
+    "display_name": "New Building",
+    "slot_type": "base_slot_or_settlement_slot",
+    "category": "production",
+    "cost": {"gold": 500},
+    "build_time": 25,
+    "max_level": 3,
+    "produces": ["heavy_infantry"],
+    "level_stats": {
+      "1": {"hp": 2000, "armor_die": "d6", "production_speed_modifier": 1.0, "can_attack": false},
+      "2": {"hp": 2800, "armor_die": "d8", "production_speed_modifier": 1.15, "can_attack": false},
+      "3": {"hp": 3600, "armor_die": "d10", "production_speed_modifier": 1.3, "can_attack": true, "attack": {"damage_die": "d6", "attack_modifier": 1, "attack_speed": 2.0, "range": 250, "crit_rate": 20}}
+    }
+  }
+}
