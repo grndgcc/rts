@@ -89,3 +89,12 @@ Tüm oyun içeriği ana dizindeki JSON dosyalarından düzenlenebilir:
 - Daha gelişmiş AI build order profilleri
 - Sprite/asset sistemi
 - Ses sistemi
+
+
+## v0.2 hızlı savaş ve token güncellemesi
+
+Bu sürümde normal battalionlar artık tek toplam can havuzu gibi saldırmaz. Her 20 kişilik birlik içinde her asker ayrı HP taşır ve kendi saldırı bekleme süresiyle ayrı saldırı zarı atar. Böylece hareket hızı aynı kalırken savaşlar çok daha hızlı ilerler.
+
+Birim token görselleri ana dizindeki PNG dosyalarından okunur. Dosya adları `units.json` içindeki `image` alanında tanımlıdır. Örneğin `heavy_infantry` için `heavyinfantry.png`, `archer` için `bowman.png`, `catapult` için `mangonel.png` kullanılır.
+
+Kule menzilleri uzatıldı ve seçili bina/kule için menzil çemberi görünür hale getirildi. Guard Tower menzilleri seviye 1/2/3 için 480/540/610 olarak ayarlandı.

@@ -3,97 +3,294 @@
     "display_name": "Resource Camp",
     "slot_type": "base_slot_or_settlement_slot",
     "category": "economy",
-    "cost": {"gold": 450},
+    "cost": {
+      "gold": 450
+    },
     "build_time": 18,
     "max_level": 3,
-    "income_gold_per_minute": [180, 260, 360],
+    "income_gold_per_minute": [
+      180,
+      260,
+      360
+    ],
     "level_stats": {
-      "1": {"hp": 1800, "armor_die": "d6", "can_attack": false},
-      "2": {"hp": 2500, "armor_die": "d8", "can_attack": false},
-      "3": {"hp": 3300, "armor_die": "d10", "can_attack": true, "attack": {"damage_die": "d6", "attack_modifier": 1, "attack_speed": 2.2, "range": 260, "crit_rate": 20}}
+      "1": {
+        "hp": 1800,
+        "armor_die": "d6",
+        "can_attack": false
+      },
+      "2": {
+        "hp": 2500,
+        "armor_die": "d8",
+        "can_attack": false
+      },
+      "3": {
+        "hp": 3300,
+        "armor_die": "d10",
+        "can_attack": true,
+        "attack": {
+          "damage_die": "d6",
+          "attack_modifier": 1,
+          "attack_speed": 2.2,
+          "range": 320,
+          "crit_rate": 20
+        }
+      }
     }
   },
   "infantry_barracks": {
     "display_name": "Infantry Barracks",
     "slot_type": "base_slot_or_settlement_slot",
     "category": "production",
-    "cost": {"gold": 500},
+    "cost": {
+      "gold": 500
+    },
     "build_time": 22,
     "max_level": 3,
-    "produces": ["heavy_infantry", "skirmisher", "pikeman"],
+    "produces": [
+      "heavy_infantry",
+      "skirmisher",
+      "pikeman"
+    ],
     "level_stats": {
-      "1": {"hp": 2500, "armor_die": "d6", "production_speed_modifier": 1.0, "can_attack": false},
-      "2": {"hp": 3300, "armor_die": "d8", "production_speed_modifier": 1.15, "can_attack": false},
-      "3": {"hp": 4300, "armor_die": "d10", "production_speed_modifier": 1.3, "can_attack": true, "attack": {"damage_die": "d6", "attack_modifier": 1, "attack_speed": 2.0, "range": 260, "crit_rate": 20}}
+      "1": {
+        "hp": 2500,
+        "armor_die": "d6",
+        "production_speed_modifier": 1.0,
+        "can_attack": false
+      },
+      "2": {
+        "hp": 3300,
+        "armor_die": "d8",
+        "production_speed_modifier": 1.15,
+        "can_attack": false
+      },
+      "3": {
+        "hp": 4300,
+        "armor_die": "d10",
+        "production_speed_modifier": 1.3,
+        "can_attack": true,
+        "attack": {
+          "damage_die": "d6",
+          "attack_modifier": 1,
+          "attack_speed": 2.0,
+          "range": 320,
+          "crit_rate": 20
+        }
+      }
     }
   },
   "archery_range": {
     "display_name": "Archery Range",
     "slot_type": "base_slot_or_settlement_slot",
     "category": "production",
-    "cost": {"gold": 550},
+    "cost": {
+      "gold": 550
+    },
     "build_time": 24,
     "max_level": 3,
-    "produces": ["archer", "crossbowman", "spear_thrower"],
+    "produces": [
+      "archer",
+      "crossbowman",
+      "spear_thrower"
+    ],
     "level_stats": {
-      "1": {"hp": 2200, "armor_die": "d6", "production_speed_modifier": 1.0, "can_attack": false},
-      "2": {"hp": 3000, "armor_die": "d8", "production_speed_modifier": 1.12, "can_attack": false},
-      "3": {"hp": 3900, "armor_die": "d10", "production_speed_modifier": 1.25, "can_attack": true, "attack": {"damage_die": "d8", "attack_modifier": 2, "attack_speed": 1.9, "range": 320, "crit_rate": 20}}
+      "1": {
+        "hp": 2200,
+        "armor_die": "d6",
+        "production_speed_modifier": 1.0,
+        "can_attack": false
+      },
+      "2": {
+        "hp": 3000,
+        "armor_die": "d8",
+        "production_speed_modifier": 1.12,
+        "can_attack": false
+      },
+      "3": {
+        "hp": 3900,
+        "armor_die": "d10",
+        "production_speed_modifier": 1.25,
+        "can_attack": true,
+        "attack": {
+          "damage_die": "d8",
+          "attack_modifier": 2,
+          "attack_speed": 1.9,
+          "range": 390,
+          "crit_rate": 20
+        }
+      }
     }
   },
   "stable": {
     "display_name": "Stable",
     "slot_type": "base_slot_or_settlement_slot",
     "category": "production",
-    "cost": {"gold": 700},
+    "cost": {
+      "gold": 700
+    },
     "build_time": 30,
     "max_level": 3,
-    "produces": ["light_cavalry", "heavy_cavalry", "cavalry_archer"],
+    "produces": [
+      "light_cavalry",
+      "heavy_cavalry",
+      "cavalry_archer"
+    ],
     "level_stats": {
-      "1": {"hp": 2600, "armor_die": "d6", "production_speed_modifier": 1.0, "can_attack": false},
-      "2": {"hp": 3500, "armor_die": "d8", "production_speed_modifier": 1.1, "can_attack": false},
-      "3": {"hp": 4500, "armor_die": "d10", "production_speed_modifier": 1.22, "can_attack": true, "attack": {"damage_die": "d6", "attack_modifier": 2, "attack_speed": 2.0, "range": 260, "crit_rate": 20}}
+      "1": {
+        "hp": 2600,
+        "armor_die": "d6",
+        "production_speed_modifier": 1.0,
+        "can_attack": false
+      },
+      "2": {
+        "hp": 3500,
+        "armor_die": "d8",
+        "production_speed_modifier": 1.1,
+        "can_attack": false
+      },
+      "3": {
+        "hp": 4500,
+        "armor_die": "d10",
+        "production_speed_modifier": 1.22,
+        "can_attack": true,
+        "attack": {
+          "damage_die": "d6",
+          "attack_modifier": 2,
+          "attack_speed": 2.0,
+          "range": 340,
+          "crit_rate": 20
+        }
+      }
     }
   },
   "siege_workshop": {
     "display_name": "Siege Workshop",
     "slot_type": "base_slot_or_settlement_slot",
     "category": "production",
-    "cost": {"gold": 850},
+    "cost": {
+      "gold": 850
+    },
     "build_time": 36,
     "max_level": 3,
-    "produces": ["scorpion", "catapult", "trebuchet"],
+    "produces": [
+      "scorpion",
+      "catapult",
+      "trebuchet"
+    ],
     "level_stats": {
-      "1": {"hp": 2600, "armor_die": "d6", "production_speed_modifier": 1.0, "can_attack": false},
-      "2": {"hp": 3600, "armor_die": "d8", "production_speed_modifier": 1.08, "can_attack": false},
-      "3": {"hp": 4800, "armor_die": "d10", "production_speed_modifier": 1.18, "can_attack": true, "attack": {"damage_die": "d8", "attack_modifier": 2, "attack_speed": 2.3, "range": 300, "crit_rate": 20}}
+      "1": {
+        "hp": 2600,
+        "armor_die": "d6",
+        "production_speed_modifier": 1.0,
+        "can_attack": false
+      },
+      "2": {
+        "hp": 3600,
+        "armor_die": "d8",
+        "production_speed_modifier": 1.08,
+        "can_attack": false
+      },
+      "3": {
+        "hp": 4800,
+        "armor_die": "d10",
+        "production_speed_modifier": 1.18,
+        "can_attack": true,
+        "attack": {
+          "damage_die": "d8",
+          "attack_modifier": 2,
+          "attack_speed": 2.3,
+          "range": 380,
+          "crit_rate": 20
+        }
+      }
     }
   },
   "research_hall": {
     "display_name": "Research Hall",
     "slot_type": "base_slot_or_settlement_slot",
     "category": "research",
-    "cost": {"gold": 650},
+    "cost": {
+      "gold": 650
+    },
     "build_time": 28,
     "max_level": 3,
     "level_stats": {
-      "1": {"hp": 2100, "armor_die": "d6", "can_attack": false},
-      "2": {"hp": 3000, "armor_die": "d8", "can_attack": false},
-      "3": {"hp": 4000, "armor_die": "d10", "can_attack": true, "attack": {"damage_die": "d8", "attack_modifier": 2, "attack_speed": 2.0, "range": 300, "crit_rate": 20}}
+      "1": {
+        "hp": 2100,
+        "armor_die": "d6",
+        "can_attack": false
+      },
+      "2": {
+        "hp": 3000,
+        "armor_die": "d8",
+        "can_attack": false
+      },
+      "3": {
+        "hp": 4000,
+        "armor_die": "d10",
+        "can_attack": true,
+        "attack": {
+          "damage_die": "d8",
+          "attack_modifier": 2,
+          "attack_speed": 2.0,
+          "range": 360,
+          "crit_rate": 20
+        }
+      }
     },
-    "researches": ["forged_blades", "reinforced_walls", "veteran_drills"]
+    "researches": [
+      "forged_blades",
+      "reinforced_walls",
+      "veteran_drills"
+    ]
   },
   "guard_tower": {
     "display_name": "Guard Tower",
     "slot_type": "base_slot_or_wall_slot",
     "category": "defence",
-    "cost": {"gold": 450},
+    "cost": {
+      "gold": 450
+    },
     "build_time": 20,
     "max_level": 3,
     "level_stats": {
-      "1": {"hp": 1600, "armor_die": "d6", "can_attack": true, "attack": {"damage_die": "d6", "attack_modifier": 2, "attack_speed": 1.7, "range": 360, "crit_rate": 20}},
-      "2": {"hp": 2300, "armor_die": "d8", "can_attack": true, "attack": {"damage_die": "d8", "attack_modifier": 3, "attack_speed": 1.55, "range": 390, "crit_rate": 20}},
-      "3": {"hp": 3100, "armor_die": "d10", "can_attack": true, "attack": {"damage_die": "d10", "attack_modifier": 4, "attack_speed": 1.4, "range": 430, "crit_rate": 19}}
+      "1": {
+        "hp": 1600,
+        "armor_die": "d6",
+        "can_attack": true,
+        "attack": {
+          "damage_die": "d6",
+          "attack_modifier": 2,
+          "attack_speed": 1.55,
+          "range": 480,
+          "crit_rate": 20
+        }
+      },
+      "2": {
+        "hp": 2300,
+        "armor_die": "d8",
+        "can_attack": true,
+        "attack": {
+          "damage_die": "d8",
+          "attack_modifier": 3,
+          "attack_speed": 1.35,
+          "range": 540,
+          "crit_rate": 20
+        }
+      },
+      "3": {
+        "hp": 3100,
+        "armor_die": "d10",
+        "can_attack": true,
+        "attack": {
+          "damage_die": "d10",
+          "attack_modifier": 4,
+          "attack_speed": 1.15,
+          "range": 610,
+          "crit_rate": 19
+        }
+      }
     }
   }
 }

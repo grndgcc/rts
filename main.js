@@ -14,13 +14,28 @@
     researches: "researches.json"
   };
 
+  const UNIT_IMAGE_FALLBACKS = {
+    heavy_infantry: "heavyinfantry.png",
+    skirmisher: "skirmisher.png",
+    pikeman: "spearman.png",
+    archer: "bowman.png",
+    crossbowman: "crossbowman.png",
+    spear_thrower: "spearthrower.png",
+    light_cavalry: "lightcavalry.png",
+    heavy_cavalry: "heavycavalry.png",
+    cavalry_archer: "cavalryarcher.png",
+    scorpion: "scorpion.png",
+    catapult: "mangonel.png",
+    trebuchet: "trebuchet.png"
+  };
+
   const DIE_TIERS = ["d2", "d4", "d6", "d8", "d10", "d12"];
 
   const DEFAULT_DATA = {
     rules: {
       simulation: { ticks_per_second: 30, base_dr: 12, seed: 1337 },
-      combat: { counter_damage_multiplier: 2, attack_crit_damage_multiplier: 2, crit_fail_stun_seconds: 2, defence_crit_stun_seconds: 2, minimum_damage: 1, charge_speed_damage_scale: 0.12 },
-      battalions: { default_size: 20, formation_spacing: 12, attacks_per_full_battalion: 4 },
+      combat: { counter_damage_multiplier: 2, attack_crit_damage_multiplier: 2, crit_fail_stun_seconds: 2, defence_crit_stun_seconds: 2, minimum_damage: 1, charge_speed_damage_scale: 0.16 },
+      battalions: { default_size: 20, formation_spacing: 12, attacks_per_full_battalion: 4, max_member_attacks_per_tick: 20, combat_model: "individual_members" },
       buildings: { base_slots_per_base: 8, wall_tower_slots_per_base: 8, repair_discount: 0.55, normal_buildings_attack_only_at_level: 3, guard_towers_always_attack: true },
       heroes: { unique_per_player: true, max_heroes_per_faction: 3, revive_enabled: true },
       resources: { starting_gold: 3000, starting_command_limit: 100, max_command_limit: 300, base_gold_per_minute: 450 }
@@ -142,6 +157,7 @@
     effects: [],
     outposts: [],
     settlements: [],
+    assets: { unitImages: {} },
     selected: [],
     selectionType: "none",
     idSeq: 1,
@@ -168,6 +184,21 @@
     }
   }
 
+  async function loadUnitImages() {
+    game.assets.unitImages = {};
+    const entries = Object.entries(game.data.units || {});
+    await Promise.all(entries.map(([kind, def]) => new Promise(resolve => {
+      const file = def.image || UNIT_IMAGE_FALLBACKS[kind];
+      if (!file) return resolve();
+      const img = new Image();
+      img.onload = () => { game.assets.unitImages[kind] = img; resolve(); };
+      img.onerror = () => resolve();
+      img.src = `${file}?v=${Date.now()}`;
+    })));
+    const loaded = Object.keys(game.assets.unitImages).length;
+    if (loaded) log(`${loaded} birim token görseli yüklendi.`);
+  }
+
   function resizeCanvas() {
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.floor(window.innerWidth * dpr);
@@ -183,6 +214,7 @@
   document.getElementById("startBtn").addEventListener("click", async () => {
     document.getElementById("bootScreen").style.display = "none";
     game.data = await loadData();
+    await loadUnitImages();
     initGame();
   });
 
@@ -470,12 +502,14 @@
       displayName: def.display_name,
       playerId,
       x, y,
-      radius: Math.max(16, 10 + Math.sqrt(count) * 3),
+      radius: Math.max(24, 16 + Math.sqrt(count) * 4),
       count,
       maxCount: count,
       memberHp: stats.hp,
       hp: hpMax,
       maxHp: hpMax,
+      members: createBattalionMembers(count, stats),
+      image: def.image || UNIT_IMAGE_FALLBACKS[unitKind] || null,
       baseStats: stats,
       tags: def.tags || [],
       targetX: x,
@@ -492,6 +526,33 @@
     game.units.push(unit);
     player.commandUsed += (stats.command_cost || 1) * count;
     return unit;
+  }
+
+  function createBattalionMembers(count, stats) {
+    const members = [];
+    const spacing = game.data?.rules?.battalions?.formation_spacing || 14;
+    const cols = Math.ceil(Math.sqrt(count));
+    for (let i = 0; i < count; i++) {
+      const row = Math.floor(i / cols);
+      const col = i % cols;
+      const ox = (col - (cols - 1) / 2) * spacing;
+      const oy = (row - (Math.ceil(count / cols) - 1) / 2) * spacing;
+      members.push({
+        hp: stats.hp,
+        maxHp: stats.hp,
+        ox,
+        oy,
+        attackCooldown: game.rng ? game.rng.next() * Math.max(0.25, stats.attack_speed || 1) : 0,
+        stunTimer: 0
+      });
+    }
+    return members;
+  }
+
+  function syncBattalionHp(unit) {
+    if (!unit.members) return;
+    unit.hp = unit.members.reduce((sum, m) => sum + Math.max(0, m.hp), 0);
+    unit.count = getLivingCount(unit);
   }
 
   function spawnHero(playerId, heroKind, x, y) {
@@ -613,9 +674,80 @@
     return { x: x + away.x * 80 + game.rng.int(-20, 20), y: y + away.y * 80 + game.rng.int(-20, 20) };
   }
 
+  function updateBattalionMembers(unit, dt) {
+    if (!unit.members) return;
+    for (const m of unit.members) {
+      if (m.hp <= 0) continue;
+      m.attackCooldown = Math.max(0, m.attackCooldown - dt);
+      m.stunTimer = Math.max(0, m.stunTimer - dt);
+    }
+  }
+
+  function chooseLivingMemberIndex(unit) {
+    if (!unit.members) return -1;
+    const damaged = [];
+    const living = [];
+    for (let i = 0; i < unit.members.length; i++) {
+      const m = unit.members[i];
+      if (m.hp <= 0) continue;
+      living.push(i);
+      if (m.hp < m.maxHp) damaged.push(i);
+    }
+    const pool = damaged.length ? damaged : living;
+    if (!pool.length) return -1;
+    return pool[game.rng.int(0, pool.length - 1)];
+  }
+
+  function applyDamageToBattalionMember(unit, amount, preferredIndex = -1) {
+    if (!unit.members) return 0;
+    let idx = preferredIndex;
+    if (idx < 0 || !unit.members[idx] || unit.members[idx].hp <= 0) idx = chooseLivingMemberIndex(unit);
+    if (idx < 0) return 0;
+    const m = unit.members[idx];
+    const before = m.hp;
+    m.hp = Math.max(0, m.hp - amount);
+    syncBattalionHp(unit);
+    return before - m.hp;
+  }
+
+  function getReadyMemberIndexes(unit) {
+    if (!unit.members) return [];
+    const ready = [];
+    for (let i = 0; i < unit.members.length; i++) {
+      const m = unit.members[i];
+      if (m.hp > 0 && m.attackCooldown <= 0 && m.stunTimer <= 0) ready.push(i);
+    }
+    return ready;
+  }
+
+  function resolveBattalionAttacks(attacker, defender, stats) {
+    const ready = getReadyMemberIndexes(attacker);
+    if (!ready.length) return;
+    const maxPerTick = game.data.rules.battalions.max_member_attacks_per_tick || 20;
+    let totalDamage = 0;
+    let critSeen = false;
+    let attacks = 0;
+    for (const index of ready.slice(0, maxPerTick)) {
+      if (!isAlive(defender)) break;
+      const m = attacker.members[index];
+      const result = resolveCombatAttack(attacker, defender, { memberIndex: index, suppressFloating: true });
+      if (result?.damage) totalDamage += result.damage;
+      if (result?.attackCrit) critSeen = true;
+      const jitter = 0.88 + game.rng.next() * 0.24;
+      m.attackCooldown = Math.max(0.18, (stats.attack_speed || 1) * jitter);
+      attacks++;
+    }
+    if (totalDamage > 0) {
+      addFloatingText(defender.x, defender.y - defender.radius - 8, critSeen ? `CRIT ${Math.round(totalDamage)}` : `${Math.round(totalDamage)}`, critSeen ? "#ffd36e" : "#fff2d4");
+    } else if (attacks > 0 && game.rng.int(1, 5) === 1) {
+      addFloatingText(defender.x, defender.y - defender.radius - 8, "BLOCK", "#b8d8ff");
+    }
+  }
+
   function updateUnits(dt) {
     applyAuras();
     for (const u of game.units) {
+      updateBattalionMembers(u, dt);
       for (const key of Object.keys(u.abilityCooldowns || {})) u.abilityCooldowns[key] = Math.max(0, u.abilityCooldowns[key] - dt);
       u.activeModifiers = (u.activeModifiers || []).filter(m => {
         if (m.remaining === "permanent") return true;
@@ -640,9 +772,13 @@
         const desiredRange = stats.range + (target.radius || 0);
         if (d <= desiredRange) {
           u.isCharging = false;
-          if (u.attackCooldown <= 0) {
-            resolveCombatAttack(u, target);
-            u.attackCooldown = Math.max(0.25, stats.attack_speed);
+          if (u.isHero) {
+            if (u.attackCooldown <= 0) {
+              resolveCombatAttack(u, target);
+              u.attackCooldown = Math.max(0.25, stats.attack_speed);
+            }
+          } else {
+            resolveBattalionAttacks(u, target, stats);
           }
         } else {
           moveToward(u, target.x, target.y, dt);
@@ -740,16 +876,17 @@
     return best;
   }
 
+  function getBuildingAttack(b) {
+    if (b.kind === "citadel") return b.attack;
+    const stats = getBuildingLevelStats(b);
+    return stats?.can_attack ? stats.attack : null;
+  }
+
   function updateBuildingsCombat(dt) {
     for (const b of game.buildings) {
       if (!b.built || !isAlive(b)) continue;
       b.attackCooldown = Math.max(0, b.attackCooldown - dt);
-      let attack = null;
-      if (b.kind === "citadel") attack = b.attack;
-      else {
-        const stats = getBuildingLevelStats(b);
-        if (stats?.can_attack) attack = stats.attack;
-      }
+      const attack = getBuildingAttack(b);
       if (!attack) continue;
       const target = nearestEnemyUnit(b.x, b.y, b.playerId, attack.range);
       if (target && b.attackCooldown <= 0) {
@@ -787,54 +924,60 @@
     return best;
   }
 
-  function resolveCombatAttack(attacker, defender) {
-    if (!isAlive(attacker) || !isAlive(defender)) return;
+  function resolveCombatAttack(attacker, defender, options = {}) {
+    if (!isAlive(attacker) || !isAlive(defender)) return { result: "dead" };
     const rules = game.data.rules;
     const atkStats = getFinalStats(attacker);
     const defStats = getFinalStats(defender);
+    const attackerMember = attacker.members && options.memberIndex !== undefined ? attacker.members[options.memberIndex] : null;
+    const targetMemberIndex = defender.members ? chooseLivingMemberIndex(defender) : -1;
+
     const attackRoll = game.rng.int(1, 20);
     if (attackRoll === 1) {
-      if (attacker.stunTimer !== undefined) attacker.stunTimer = rules.combat.crit_fail_stun_seconds;
-      addFloatingText(attacker.x, attacker.y - 20, "FAIL", "#ff9b70");
-      return;
+      if (attackerMember) attackerMember.stunTimer = rules.combat.crit_fail_stun_seconds;
+      else if (attacker.stunTimer !== undefined) attacker.stunTimer = rules.combat.crit_fail_stun_seconds;
+      if (!options.suppressFloating) addFloatingText(attacker.x, attacker.y - 20, "FAIL", "#ff9b70");
+      return { result: "attack_crit_fail", damage: 0 };
     }
     const attackTotal = attackRoll + (atkStats.attack_modifier || 0);
-    if (attackTotal < rules.simulation.base_dr) return;
+    if (attackTotal < rules.simulation.base_dr) return { result: "miss", damage: 0 };
     const attackCrit = attackRoll >= (atkStats.crit_rate || 20);
 
     const defenceRoll = game.rng.int(1, 20);
-    if (defenceRoll === 1 && defender.stunTimer !== undefined) {
-      defender.stunTimer = rules.combat.crit_fail_stun_seconds;
-      addFloatingText(defender.x, defender.y - 20, "STUN", "#b8d8ff");
+    if (defenceRoll === 1) {
+      if (defender.members && targetMemberIndex >= 0) defender.members[targetMemberIndex].stunTimer = rules.combat.crit_fail_stun_seconds;
+      else if (defender.stunTimer !== undefined) defender.stunTimer = rules.combat.crit_fail_stun_seconds;
+      if (!options.suppressFloating) addFloatingText(defender.x, defender.y - 20, "STUN", "#b8d8ff");
     }
     const defenceTotal = defenceRoll + (defStats.defence_modifier || 0);
     if (defenceRoll === 20 || defenceTotal >= rules.simulation.base_dr) {
-      if (defenceRoll === 20 && attacker.stunTimer !== undefined) {
-        attacker.stunTimer = rules.combat.defence_crit_stun_seconds;
-        addFloatingText(attacker.x, attacker.y - 20, "PARRY", "#b8d8ff");
+      if (defenceRoll === 20) {
+        if (attackerMember) attackerMember.stunTimer = rules.combat.defence_crit_stun_seconds;
+        else if (attacker.stunTimer !== undefined) attacker.stunTimer = rules.combat.defence_crit_stun_seconds;
+        if (!options.suppressFloating) addFloatingText(attacker.x, attacker.y - 20, "PARRY", "#b8d8ff");
       }
-      return;
+      return { result: defenceRoll === 20 ? "defence_crit_block" : "blocked", damage: 0 };
     }
 
     let armorDie = defStats.armor_die || defender.armorDie || "d2";
     if (attackCrit) armorDie = lowerDieTier(armorDie);
-    const livingFactor = attacker.isHero ? 1 : Math.max(1, Math.ceil(getLivingCount(attacker) / 5));
-    let totalDamage = 0;
-    for (let i = 0; i < livingFactor; i++) {
-      const damageRoll = rollDie(game.rng, atkStats.damage_die || "d4");
-      const armorRoll = rollDie(game.rng, armorDie);
-      let damage = Math.max(rules.combat.minimum_damage, damageRoll - armorRoll);
-      if (isCounter(attacker, defender)) damage *= rules.combat.counter_damage_multiplier;
-      if (attackCrit) damage *= rules.combat.attack_crit_damage_multiplier;
-      totalDamage += damage;
-    }
+    const damageRoll = rollDie(game.rng, atkStats.damage_die || "d4");
+    const armorRoll = rollDie(game.rng, armorDie);
+    let totalDamage = Math.max(rules.combat.minimum_damage, damageRoll - armorRoll);
+    if (isCounter(attacker, defender)) totalDamage *= rules.combat.counter_damage_multiplier;
+    if (attackCrit) totalDamage *= rules.combat.attack_crit_damage_multiplier;
+
     if (attacker.isCharging && attacker.chargeReady) {
       totalDamage += Math.round((atkStats.speed || 0) * rules.combat.charge_speed_damage_scale + (atkStats.charge_damage || 0));
       attacker.chargeReady = false;
     }
     if (defender.tags?.includes("building") || defender.entityType === "building") totalDamage *= 7;
-    damageEntity(defender, Math.round(totalDamage), attacker);
-    addFloatingText(defender.x, defender.y - defender.radius - 8, attackCrit ? `CRIT ${Math.round(totalDamage)}` : `${Math.round(totalDamage)}`, attackCrit ? "#ffd36e" : "#fff2d4");
+    totalDamage = Math.round(totalDamage);
+    const applied = damageEntity(defender, totalDamage, attacker, { memberIndex: targetMemberIndex });
+    if (!options.suppressFloating) {
+      addFloatingText(defender.x, defender.y - defender.radius - 8, attackCrit ? `CRIT ${Math.round(applied || totalDamage)}` : `${Math.round(applied || totalDamage)}`, attackCrit ? "#ffd36e" : "#fff2d4");
+    }
+    return { result: "hit", damage: applied || totalDamage, attackCrit };
   }
 
   function isCounter(attacker, defender) {
@@ -845,17 +988,24 @@
     return defTypes.some(t => list.includes(t));
   }
 
-  function damageEntity(entity, amount, source) {
-    entity.hp -= amount;
+  function damageEntity(entity, amount, source, options = {}) {
+    let applied = amount;
+    if (entity.members && !entity.isHero) {
+      applied = applyDamageToBattalionMember(entity, amount, options.memberIndex ?? -1);
+    } else {
+      entity.hp -= amount;
+    }
     if (entity.hp <= 0) {
       entity.hp = 0;
       if (entity.playerId === 1) log(`${entity.displayName} kaybedildi.`);
       if (source?.playerId === 1) log(`${entity.displayName} yok edildi.`);
     }
+    return applied;
   }
 
   function getLivingCount(u) {
     if (u.isHero) return 1;
+    if (u.members) return u.members.filter(m => m.hp > 0).length;
     return clamp(Math.ceil(u.hp / u.memberHp), 0, u.maxCount);
   }
 
@@ -1117,6 +1267,12 @@
         ctx.strokeStyle = "#fff2af";
         ctx.lineWidth = 3;
         circle(b.x, b.y, b.radius + 8, false);
+        const attack = getBuildingAttack(b);
+        if (attack?.range) {
+          ctx.strokeStyle = "rgba(255,242,175,0.28)";
+          ctx.lineWidth = 2;
+          circle(b.x, b.y, attack.range + b.radius, false);
+        }
       }
       drawProgressBar(b.x - 38, b.y - b.radius - 14, 76, 7, b.hp / b.maxHp, color);
       if (!b.built) drawProgressBar(b.x - 38, b.y + b.radius + 8, 76, 6, b.buildProgress, "#f1cc61");
@@ -1137,19 +1293,34 @@
         circle(u.x, u.y, u.radius, false);
         drawWorldText("★", u.x, u.y + 5, "#151515", 18);
       } else {
-        const living = getLivingCount(u);
-        const spacing = game.data.rules.battalions.formation_spacing || 12;
-        const cols = Math.ceil(Math.sqrt(u.maxCount));
-        for (let i = 0; i < living; i++) {
-          const row = Math.floor(i / cols);
-          const col = i % cols;
-          const ox = (col - cols / 2) * spacing;
-          const oy = (row - cols / 2) * spacing;
-          ctx.fillStyle = color;
-          ctx.strokeStyle = "rgba(0,0,0,0.45)";
-          ctx.lineWidth = 1;
-          circle(u.x + ox, u.y + oy, 4.2, true);
-          circle(u.x + ox, u.y + oy, 4.2, false);
+        const img = game.assets.unitImages[u.unitType];
+        if (img) {
+          const size = Math.max(48, u.radius * 2.35);
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(u.x, u.y, size / 2, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(img, u.x - size / 2, u.y - size / 2, size, size);
+          ctx.restore();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 3;
+          circle(u.x, u.y, size / 2 + 1, false);
+          drawWorldText(`${getLivingCount(u)}`, u.x + size * 0.34, u.y + size * 0.34, "#fff7dc", 14);
+        } else {
+          const living = getLivingCount(u);
+          const spacing = game.data.rules.battalions.formation_spacing || 12;
+          const cols = Math.ceil(Math.sqrt(u.maxCount));
+          for (let i = 0; i < living; i++) {
+            const row = Math.floor(i / cols);
+            const col = i % cols;
+            const ox = (col - cols / 2) * spacing;
+            const oy = (row - cols / 2) * spacing;
+            ctx.fillStyle = color;
+            ctx.strokeStyle = "rgba(0,0,0,0.45)";
+            ctx.lineWidth = 1;
+            circle(u.x + ox, u.y + oy, 4.2, true);
+            circle(u.x + ox, u.y + oy, 4.2, false);
+          }
         }
       }
       if (u.stunTimer > 0) drawWorldText("STUN", u.x, u.y - u.radius - 18, "#b8d8ff", 11);

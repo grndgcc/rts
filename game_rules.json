@@ -10,12 +10,14 @@
     "crit_fail_stun_seconds": 2,
     "defence_crit_stun_seconds": 2,
     "minimum_damage": 1,
-    "charge_speed_damage_scale": 0.12
+    "charge_speed_damage_scale": 0.16
   },
   "battalions": {
     "default_size": 20,
     "formation_spacing": 12,
-    "attacks_per_full_battalion": 4
+    "attacks_per_full_battalion": 4,
+    "max_member_attacks_per_tick": 20,
+    "combat_model": "individual_members"
   },
   "buildings": {
     "base_slots_per_base": 8,

@@ -3,108 +3,359 @@
     "display_name": "Heavy Infantry",
     "category": "infantry",
     "battalion_size": 20,
-    "cost": {"gold": 350},
+    "cost": {
+      "gold": 350
+    },
     "build_time": 18,
-    "stats": {"hp": 70, "armor": 6, "attack_modifier": 3, "defence_modifier": 3, "damage_die": "d8", "armor_die": "d8", "attack_speed": 1.25, "range": 34, "crit_rate": 18, "speed": 44, "charge_damage": 4, "vision": 360, "command_cost": 2},
-    "tags": ["infantry", "melee", "armored"]
+    "stats": {
+      "hp": 70,
+      "armor": 6,
+      "attack_modifier": 3,
+      "defence_modifier": 3,
+      "damage_die": "d8",
+      "armor_die": "d8",
+      "attack_speed": 1.25,
+      "range": 34,
+      "crit_rate": 18,
+      "speed": 44,
+      "charge_damage": 4,
+      "vision": 360,
+      "command_cost": 2
+    },
+    "tags": [
+      "infantry",
+      "melee",
+      "armored"
+    ],
+    "image": "heavyinfantry.png"
   },
   "skirmisher": {
     "display_name": "Skirmisher",
     "category": "infantry",
     "battalion_size": 20,
-    "cost": {"gold": 220},
+    "cost": {
+      "gold": 220
+    },
     "build_time": 13,
-    "stats": {"hp": 45, "armor": 3, "attack_modifier": 2, "defence_modifier": 1, "damage_die": "d6", "armor_die": "d4", "attack_speed": 0.9, "range": 30, "crit_rate": 18, "speed": 62, "charge_damage": 3, "vision": 380, "command_cost": 1},
-    "tags": ["infantry", "melee", "light"]
+    "stats": {
+      "hp": 45,
+      "armor": 3,
+      "attack_modifier": 2,
+      "defence_modifier": 1,
+      "damage_die": "d6",
+      "armor_die": "d4",
+      "attack_speed": 0.9,
+      "range": 30,
+      "crit_rate": 18,
+      "speed": 62,
+      "charge_damage": 3,
+      "vision": 380,
+      "command_cost": 1
+    },
+    "tags": [
+      "infantry",
+      "melee",
+      "light"
+    ],
+    "image": "skirmisher.png"
   },
   "pikeman": {
     "display_name": "Pikeman",
     "category": "infantry",
     "battalion_size": 20,
-    "cost": {"gold": 280},
+    "cost": {
+      "gold": 280
+    },
     "build_time": 15,
-    "stats": {"hp": 55, "armor": 4, "attack_modifier": 2, "defence_modifier": 2, "damage_die": "d6", "armor_die": "d6", "attack_speed": 1.35, "range": 48, "crit_rate": 18, "speed": 42, "charge_damage": 2, "vision": 360, "command_cost": 1},
-    "tags": ["infantry", "melee", "anti_cavalry"]
+    "stats": {
+      "hp": 55,
+      "armor": 4,
+      "attack_modifier": 2,
+      "defence_modifier": 2,
+      "damage_die": "d6",
+      "armor_die": "d6",
+      "attack_speed": 1.35,
+      "range": 48,
+      "crit_rate": 18,
+      "speed": 42,
+      "charge_damage": 2,
+      "vision": 360,
+      "command_cost": 1
+    },
+    "tags": [
+      "infantry",
+      "melee",
+      "anti_cavalry"
+    ],
+    "image": "spearman.png"
   },
   "archer": {
     "display_name": "Archer",
     "category": "ranged",
     "battalion_size": 20,
-    "cost": {"gold": 300},
+    "cost": {
+      "gold": 300
+    },
     "build_time": 17,
-    "stats": {"hp": 36, "armor": 2, "attack_modifier": 2, "defence_modifier": 0, "damage_die": "d6", "armor_die": "d4", "attack_speed": 1.45, "range": 270, "crit_rate": 20, "speed": 48, "charge_damage": 0, "vision": 470, "command_cost": 1},
-    "tags": ["ranged", "archer", "light"]
+    "stats": {
+      "hp": 36,
+      "armor": 2,
+      "attack_modifier": 2,
+      "defence_modifier": 0,
+      "damage_die": "d6",
+      "armor_die": "d4",
+      "attack_speed": 1.45,
+      "range": 270,
+      "crit_rate": 20,
+      "speed": 48,
+      "charge_damage": 0,
+      "vision": 470,
+      "command_cost": 1
+    },
+    "tags": [
+      "ranged",
+      "archer",
+      "light"
+    ],
+    "image": "bowman.png"
   },
   "crossbowman": {
     "display_name": "Crossbowman",
     "category": "ranged",
     "battalion_size": 20,
-    "cost": {"gold": 380},
+    "cost": {
+      "gold": 380
+    },
     "build_time": 22,
-    "stats": {"hp": 42, "armor": 3, "attack_modifier": 3, "defence_modifier": 0, "damage_die": "d8", "armor_die": "d4", "attack_speed": 2.05, "range": 250, "crit_rate": 19, "speed": 42, "charge_damage": 0, "vision": 440, "command_cost": 2},
-    "tags": ["ranged", "crossbow", "armor_piercing"]
+    "stats": {
+      "hp": 42,
+      "armor": 3,
+      "attack_modifier": 3,
+      "defence_modifier": 0,
+      "damage_die": "d8",
+      "armor_die": "d4",
+      "attack_speed": 2.05,
+      "range": 250,
+      "crit_rate": 19,
+      "speed": 42,
+      "charge_damage": 0,
+      "vision": 440,
+      "command_cost": 2
+    },
+    "tags": [
+      "ranged",
+      "crossbow",
+      "armor_piercing"
+    ],
+    "image": "crossbowman.png"
   },
   "spear_thrower": {
     "display_name": "Spear Thrower",
     "category": "ranged",
     "battalion_size": 20,
-    "cost": {"gold": 340},
+    "cost": {
+      "gold": 340
+    },
     "build_time": 19,
-    "stats": {"hp": 50, "armor": 4, "attack_modifier": 2, "defence_modifier": 1, "damage_die": "d6", "armor_die": "d6", "attack_speed": 1.65, "range": 185, "crit_rate": 20, "speed": 46, "charge_damage": 2, "vision": 400, "command_cost": 1},
-    "tags": ["ranged", "anti_cavalry", "medium"]
+    "stats": {
+      "hp": 50,
+      "armor": 4,
+      "attack_modifier": 2,
+      "defence_modifier": 1,
+      "damage_die": "d6",
+      "armor_die": "d6",
+      "attack_speed": 1.65,
+      "range": 185,
+      "crit_rate": 20,
+      "speed": 46,
+      "charge_damage": 2,
+      "vision": 400,
+      "command_cost": 1
+    },
+    "tags": [
+      "ranged",
+      "anti_cavalry",
+      "medium"
+    ],
+    "image": "spearthrower.png"
   },
   "light_cavalry": {
     "display_name": "Light Cavalry",
     "category": "cavalry",
     "battalion_size": 20,
-    "cost": {"gold": 520},
+    "cost": {
+      "gold": 520
+    },
     "build_time": 24,
-    "stats": {"hp": 75, "armor": 4, "attack_modifier": 3, "defence_modifier": 1, "damage_die": "d8", "armor_die": "d6", "attack_speed": 1.05, "range": 36, "crit_rate": 18, "speed": 92, "charge_damage": 16, "vision": 420, "command_cost": 3},
-    "tags": ["cavalry", "melee", "fast"]
+    "stats": {
+      "hp": 75,
+      "armor": 4,
+      "attack_modifier": 3,
+      "defence_modifier": 1,
+      "damage_die": "d8",
+      "armor_die": "d6",
+      "attack_speed": 1.05,
+      "range": 36,
+      "crit_rate": 18,
+      "speed": 92,
+      "charge_damage": 16,
+      "vision": 420,
+      "command_cost": 3
+    },
+    "tags": [
+      "cavalry",
+      "melee",
+      "fast"
+    ],
+    "image": "lightcavalry.png"
   },
   "heavy_cavalry": {
     "display_name": "Heavy Cavalry",
     "category": "cavalry",
     "battalion_size": 20,
-    "cost": {"gold": 700},
+    "cost": {
+      "gold": 700
+    },
     "build_time": 32,
-    "stats": {"hp": 95, "armor": 7, "attack_modifier": 4, "defence_modifier": 3, "damage_die": "d10", "armor_die": "d8", "attack_speed": 1.3, "range": 38, "crit_rate": 18, "speed": 76, "charge_damage": 24, "vision": 420, "command_cost": 4},
-    "tags": ["cavalry", "melee", "armored"]
+    "stats": {
+      "hp": 95,
+      "armor": 7,
+      "attack_modifier": 4,
+      "defence_modifier": 3,
+      "damage_die": "d10",
+      "armor_die": "d8",
+      "attack_speed": 1.3,
+      "range": 38,
+      "crit_rate": 18,
+      "speed": 76,
+      "charge_damage": 24,
+      "vision": 420,
+      "command_cost": 4
+    },
+    "tags": [
+      "cavalry",
+      "melee",
+      "armored"
+    ],
+    "image": "heavycavalry.png"
   },
   "cavalry_archer": {
     "display_name": "Cavalry Archer",
     "category": "cavalry",
     "battalion_size": 20,
-    "cost": {"gold": 620},
+    "cost": {
+      "gold": 620
+    },
     "build_time": 30,
-    "stats": {"hp": 60, "armor": 3, "attack_modifier": 3, "defence_modifier": 1, "damage_die": "d6", "armor_die": "d4", "attack_speed": 1.55, "range": 220, "crit_rate": 20, "speed": 88, "charge_damage": 4, "vision": 450, "command_cost": 3},
-    "tags": ["cavalry", "ranged", "fast"]
+    "stats": {
+      "hp": 60,
+      "armor": 3,
+      "attack_modifier": 3,
+      "defence_modifier": 1,
+      "damage_die": "d6",
+      "armor_die": "d4",
+      "attack_speed": 1.55,
+      "range": 220,
+      "crit_rate": 20,
+      "speed": 88,
+      "charge_damage": 4,
+      "vision": 450,
+      "command_cost": 3
+    },
+    "tags": [
+      "cavalry",
+      "ranged",
+      "fast"
+    ],
+    "image": "cavalryarcher.png"
   },
   "scorpion": {
     "display_name": "Scorpion",
     "category": "siege",
     "battalion_size": 4,
-    "cost": {"gold": 650},
+    "cost": {
+      "gold": 650
+    },
     "build_time": 34,
-    "stats": {"hp": 150, "armor": 4, "attack_modifier": 4, "defence_modifier": 0, "damage_die": "d10", "armor_die": "d4", "attack_speed": 2.4, "range": 360, "crit_rate": 20, "speed": 28, "charge_damage": 0, "vision": 470, "command_cost": 5},
-    "tags": ["siege", "anti_unit"]
+    "stats": {
+      "hp": 150,
+      "armor": 4,
+      "attack_modifier": 4,
+      "defence_modifier": 0,
+      "damage_die": "d10",
+      "armor_die": "d4",
+      "attack_speed": 2.4,
+      "range": 360,
+      "crit_rate": 20,
+      "speed": 28,
+      "charge_damage": 0,
+      "vision": 470,
+      "command_cost": 5
+    },
+    "tags": [
+      "siege",
+      "anti_unit"
+    ],
+    "image": "scorpion.png"
   },
   "catapult": {
     "display_name": "Catapult",
     "category": "siege",
     "battalion_size": 3,
-    "cost": {"gold": 850},
+    "cost": {
+      "gold": 850
+    },
     "build_time": 42,
-    "stats": {"hp": 180, "armor": 4, "attack_modifier": 3, "defence_modifier": -1, "damage_die": "d12", "armor_die": "d4", "attack_speed": 3.2, "range": 470, "crit_rate": 20, "speed": 24, "charge_damage": 0, "vision": 500, "command_cost": 7},
-    "tags": ["siege", "area", "building_breaker"]
+    "stats": {
+      "hp": 180,
+      "armor": 4,
+      "attack_modifier": 3,
+      "defence_modifier": -1,
+      "damage_die": "d12",
+      "armor_die": "d4",
+      "attack_speed": 3.2,
+      "range": 470,
+      "crit_rate": 20,
+      "speed": 24,
+      "charge_damage": 0,
+      "vision": 500,
+      "command_cost": 7
+    },
+    "tags": [
+      "siege",
+      "area",
+      "building_breaker"
+    ],
+    "image": "mangonel.png"
   },
   "trebuchet": {
     "display_name": "Trebuchet",
     "category": "siege",
     "battalion_size": 2,
-    "cost": {"gold": 1200},
+    "cost": {
+      "gold": 1200
+    },
     "build_time": 55,
-    "stats": {"hp": 220, "armor": 5, "attack_modifier": 2, "defence_modifier": -2, "damage_die": "d12", "armor_die": "d6", "attack_speed": 4.6, "range": 660, "crit_rate": 20, "speed": 18, "charge_damage": 0, "vision": 560, "command_cost": 10},
-    "tags": ["siege", "long_range", "wall_breaker"]
+    "stats": {
+      "hp": 220,
+      "armor": 5,
+      "attack_modifier": 2,
+      "defence_modifier": -2,
+      "damage_die": "d12",
+      "armor_die": "d6",
+      "attack_speed": 4.6,
+      "range": 660,
+      "crit_rate": 20,
+      "speed": 18,
+      "charge_damage": 0,
+      "vision": 560,
+      "command_cost": 10
+    },
+    "tags": [
+      "siege",
+      "long_range",
+      "wall_breaker"
+    ],
+    "image": "trebuchet.png"
   }
 }
