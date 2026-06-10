@@ -2,23 +2,115 @@
   "duel_plains": {
     "id": "duel_plains",
     "display_name": "Duel Plains",
-    "size": {"width": 3200, "height": 2200},
+    "size": {
+      "width": 4096,
+      "height": 2304
+    },
     "players": 2,
     "starting_bases": [
-      {"player_slot": 1, "position": {"x": 520, "y": 1100}, "base_slots": 8, "wall_tower_slots": 8},
-      {"player_slot": 2, "position": {"x": 2680, "y": 1100}, "base_slots": 8, "wall_tower_slots": 8}
+      {
+        "player_slot": 1,
+        "position": {
+          "x": 720,
+          "y": 860
+        },
+        "base_slots": 8,
+        "wall_tower_slots": 8
+      },
+      {
+        "player_slot": 2,
+        "position": {
+          "x": 3330,
+          "y": 1520
+        },
+        "base_slots": 8,
+        "wall_tower_slots": 8
+      }
     ],
     "neutral_settlements": [
-      {"id": "central_ruins", "position": {"x": 1600, "y": 1100}, "capture_radius": 170, "base_slots": 4}
+      {
+        "id": "western_castle",
+        "display_name": "Western Castle",
+        "position": {
+          "x": 1160,
+          "y": 980
+        },
+        "capture_radius": 175,
+        "base_slots": 4
+      },
+      {
+        "id": "central_port",
+        "display_name": "Central Port",
+        "position": {
+          "x": 2050,
+          "y": 1180
+        },
+        "capture_radius": 170,
+        "base_slots": 4
+      },
+      {
+        "id": "eastern_ruins",
+        "display_name": "Eastern Ruins",
+        "position": {
+          "x": 2960,
+          "y": 980
+        },
+        "capture_radius": 170,
+        "base_slots": 4
+      }
     ],
     "resource_outposts": [
-      {"id": "north_mine", "position": {"x": 1600, "y": 420}, "capture_radius": 125, "income": {"gold_per_minute": 180}},
-      {"id": "south_mine", "position": {"x": 1600, "y": 1780}, "capture_radius": 125, "income": {"gold_per_minute": 180}}
+      {
+        "id": "north_mine",
+        "display_name": "North Mine",
+        "position": {
+          "x": 2050,
+          "y": 620
+        },
+        "capture_radius": 125,
+        "income": {
+          "gold_per_minute": 190
+        }
+      },
+      {
+        "id": "south_mine",
+        "display_name": "South Mine",
+        "position": {
+          "x": 2110,
+          "y": 1780
+        },
+        "capture_radius": 125,
+        "income": {
+          "gold_per_minute": 190
+        }
+      },
+      {
+        "id": "western_farms",
+        "display_name": "Western Farms",
+        "position": {
+          "x": 830,
+          "y": 1510
+        },
+        "capture_radius": 120,
+        "income": {
+          "gold_per_minute": 150
+        }
+      },
+      {
+        "id": "eastern_oasis",
+        "display_name": "Eastern Oasis",
+        "position": {
+          "x": 3370,
+          "y": 1080
+        },
+        "capture_radius": 120,
+        "income": {
+          "gold_per_minute": 150
+        }
+      }
     ],
-    "decor": [
-      {"type": "forest", "x": 920, "y": 400, "r": 180},
-      {"type": "forest", "x": 2280, "y": 1780, "r": 190},
-      {"type": "hill", "x": 1600, "y": 1100, "r": 250}
-    ]
+    "decor": [],
+    "background_image": "map_background.png",
+    "background_fit": "stretch"
   }
 }

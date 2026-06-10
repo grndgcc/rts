@@ -1,100 +1,74 @@
-# Realm Siege RTS Prototype v0.1
+# Realm Siege RTS Prototype v0.3
 
-Bu paket, düz ana dizin yapısına sahip HTML/CSS/JavaScript RTS prototipidir.
+Flat-folder, GitHub Pages friendly JavaScript RTS prototype.
 
-## Çalıştırma
+## Nasıl çalıştırılır?
 
-GitHub Pages için dosyaları aynı klasöre yüklemen yeterli:
+Dosyaların tamamını GitHub repo ana dizinine koy. GitHub Pages açıldığında `index.html` doğrudan çalışır.
 
-```txt
-index.html
-style.css
-main.js
-game_rules.json
-factions.json
-units.json
-buildings.json
-heroes.json
-abilities.json
-modifiers.json
-counter_matrix.json
-maps.json
-researches.json
-```
-
-Yerelde test etmek için klasörde terminal açıp şunu çalıştır:
+Yerelde test:
 
 ```bash
 python -m http.server 8000
 ```
 
-Sonra tarayıcıdan aç:
+Sonra tarayıcıda:
 
 ```txt
 http://localhost:8000
 ```
 
-Dosyaya çift tıklayarak açarsan bazı tarayıcılar JSON dosyalarını engelleyebilir. Bu durumda oyun gömülü yedek veriyle açılır; JSON düzenlemelerini görmek için local server veya GitHub Pages kullan.
+## v0.3 yenilikleri
 
-## Kontroller
+- Ülke seçimi: oyun başlamadan oyuncu ve rakip faction seçilebilir.
+- Oyun modu seçimi: singleplayer, multiplayer host, multiplayer join.
+- Multiplayer mantığı: WebSocket relay server ile komut gönderme/alma sistemi eklendi.
+- Harita arkaplanı: `map_background.png` ana dizinde kullanılır ve `maps.json` içinden tanımlıdır.
+- Teknoloji sistemi: Research Hall üzerinden araştırmalar yapılabilir.
+- Teknoloji etkileri: melee/ranged/siege damage die upgrade, tower range, economy, production speed, command limit, armor/hp bonusları.
+- AI zorluğu: Easy/Normal/Hard üretim ve saldırı temposunu değiştirir.
+- Local player sistemi: Host P1, Join P2 olarak oynanabilir.
 
-- Sol tık: seç
-- Sürükle: kutu seçimi
-- Sağ tık: hareket / saldırı
-- WASD veya ok tuşları: kamera
-- Mouse wheel: zoom
-- Q/W/E/R: seçili hero yetenekleri
-- Space: seçili hero'ya kamera
+## Dosyalar
 
-## İçerik düzenleme
+- `index.html`: UI ve canvas giriş dosyası.
+- `style.css`: menü/HUD/panel stilleri.
+- `main.js`: oyun motoru, combat, AI, technology, multiplayer client logic.
+- `server.js`: multiplayer WebSocket relay server.
+- `factions.json`: ülkeler.
+- `units.json`: birimler.
+- `buildings.json`: binalar ve Research Hall.
+- `heroes.json`: hero verileri.
+- `abilities.json`: hero skill verileri.
+- `modifiers.json`: aura/buff/debuff verileri.
+- `researches.json`: teknoloji sistemi.
+- `maps.json`: harita, slotlar, outpostlar, arkaplan resmi.
+- `counter_matrix.json`: counter sistemi.
+- `map_background.png`: harita arkaplanı.
 
-Tüm oyun içeriği ana dizindeki JSON dosyalarından düzenlenebilir:
+## Multiplayer test
 
-- `units.json`: birimler, zarlar, attack/defence modifier, hız, range, crit rate
-- `buildings.json`: binalar, slot türleri, üretim listeleri, seviye değerleri
-- `heroes.json`: hero statları, pasifleri, yetenek listeleri
-- `abilities.json`: hero yetenekleri
-- `modifiers.json`: CK3 tarzı buff/debuff/aura sistemi
-- `counter_matrix.json`: counter ilişkileri
-- `factions.json`: ülke/faction bonusları ve hero listeleri
-- `maps.json`: başlangıç base'leri, neutral settlement ve resource outpost yerleri
-- `game_rules.json`: genel simülasyon ve combat kuralları
+GitHub Pages server çalıştıramaz. Multiplayer için kendi bilgisayarında Node.js server aç:
 
-## Mevcut özellikler
+```bash
+npm install
+npm start
+```
 
-- 2 oyunculu RTS prototip
-- Human vs AI
-- Base çevresinde 8 bina slotu
-- Wall/tower slotları
-- Neutral settlement ve resource outpost capture
-- Bina inşa etme
-- Bina tamir etme
-- Bina upgrade etme
-- Üretim kuyruğu
-- Battalion sistemi
-- Hero sistemi
-- Hero skill hotkeyleri
-- Mörk Borg tarzı d20 attack/defence çözümü
-- Damage die / armor die sistemi
-- Counter damage 2x
-- Charge bonus damage
-- Basit AI: bina kurar, unit üretir, hero çağırır ve dalga saldırısı yapar
+Server varsayılan olarak:
 
-## Sonraki paketlerde önerilen geliştirmeler
+```txt
+ws://localhost:8787
+```
 
-- Daha güçlü pathfinding
-- Gerçek multiplayer lockstep server
-- Replay/desync hash sistemi
-- Research butonlarının tamamlanması
-- Daha gelişmiş AI build order profilleri
-- Sprite/asset sistemi
-- Ses sistemi
+Aynı bilgisayarda iki tarayıcı sekmesi aç:
 
+1. İlk sekme: Multiplayer Host / Player 1.
+2. İkinci sekme: Multiplayer Join / Player 2.
+3. İkisi de aynı Room ID kullanmalı.
 
-## v0.2 hızlı savaş ve token güncellemesi
+Bu sürüm tam profesyonel lockstep değildir; ancak RTS multiplayer için gereken komut mimarisi hazırdır: build, train, research, move/attack, hero ability komutları relay üzerinden karşı tarafa gönderilir.
 
-Bu sürümde normal battalionlar artık tek toplam can havuzu gibi saldırmaz. Her 20 kişilik birlik içinde her asker ayrı HP taşır ve kendi saldırı bekleme süresiyle ayrı saldırı zarı atar. Böylece hareket hızı aynı kalırken savaşlar çok daha hızlı ilerler.
+## Modlama
 
-Birim token görselleri ana dizindeki PNG dosyalarından okunur. Dosya adları `units.json` içindeki `image` alanında tanımlıdır. Örneğin `heavy_infantry` için `heavyinfantry.png`, `archer` için `bowman.png`, `catapult` için `mangonel.png` kullanılır.
-
-Kule menzilleri uzatıldı ve seçili bina/kule için menzil çemberi görünür hale getirildi. Guard Tower menzilleri seviye 1/2/3 için 480/540/610 olarak ayarlandı.
+Yeni ülke, birim, bina, hero veya teknoloji eklemek için ilgili JSON dosyasına yeni kayıt eklenir. Motor mümkün olduğunca isimleri hard-code etmez.

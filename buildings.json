@@ -241,8 +241,14 @@
     },
     "researches": [
       "forged_blades",
+      "bodkin_arrows",
+      "reinforced_armor",
+      "horse_breeding",
+      "siege_engineering",
       "reinforced_walls",
-      "veteran_drills"
+      "tower_watch",
+      "veteran_drills",
+      "royal_logistics"
     ]
   },
   "guard_tower": {

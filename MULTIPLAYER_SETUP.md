@@ -1,38 +1,36 @@
-# Multiplayer Stub Kullanımı
+# Multiplayer Setup
 
-Bu paket, gerçek multiplayer için ilk Node.js WebSocket relay iskeletidir. Ana oyuna henüz bağlanmış değildir; ileride `main.js` içindeki komut sistemine bağlanacaktır.
+Bu sürümde multiplayer, WebSocket relay server üzerinden komut taşır.
 
-## Çalıştırma
+## Kurulum
 
 ```bash
 npm install
 npm start
 ```
 
-Sunucu:
+Server:
 
 ```txt
 ws://localhost:8787
 ```
 
-## Mesaj akışı
+## Test
 
-Client:
+1. Birinci tarayıcı sekmesi: `Multiplayer Host / Player 1`
+2. İkinci tarayıcı sekmesi: `Multiplayer Join / Player 2`
+3. Aynı `Room ID` gir.
+4. İki client aynı seed ile başlamalı.
 
-```json
-{"type":"join","roomId":"test"}
-```
+## Taşınan komutlar
 
-Server:
+- `build`
+- `upgrade_building`
+- `repair_building`
+- `train_unit`
+- `train_hero`
+- `research`
+- `unit_order`
+- `cast_ability`
 
-```json
-{"type":"joined","roomId":"test","playerId":1,"seed":123456}
-```
-
-Client komutu:
-
-```json
-{"type":"command","tick":1234,"command":{"type":"move","unitIds":["unit_1"],"x":1200,"y":900}}
-```
-
-Server bütün oyunculara aynı komutu yayınlar.
+Bu yapı ileride tam deterministic lockstep'e çevrilebilir. Şimdiki sürüm hızlı test için komutu hem yerelde uygular hem server üzerinden diğer client'a gönderir.

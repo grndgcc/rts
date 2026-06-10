@@ -1,20 +1,151 @@
 {
   "forged_blades": {
     "display_name": "Forged Blades",
-    "cost": {"gold": 800},
+    "tier": 1,
+    "cost": {
+      "gold": 800
+    },
     "research_time": 35,
-    "effects": {"melee_damage_die_upgrade": 1}
+    "requirements": {
+      "building": "research_hall",
+      "building_level": 1
+    },
+    "effects": {
+      "melee_damage_die_upgrade": 1
+    }
+  },
+  "bodkin_arrows": {
+    "display_name": "Bodkin Arrows",
+    "tier": 1,
+    "cost": {
+      "gold": 750
+    },
+    "research_time": 34,
+    "requirements": {
+      "building": "research_hall",
+      "building_level": 1
+    },
+    "effects": {
+      "ranged_damage_die_upgrade": 1,
+      "ranged_attack_modifier_add": 1
+    }
+  },
+  "reinforced_armor": {
+    "display_name": "Reinforced Armor",
+    "tier": 1,
+    "cost": {
+      "gold": 700
+    },
+    "research_time": 32,
+    "requirements": {
+      "building": "research_hall",
+      "building_level": 1
+    },
+    "effects": {
+      "armor_die_upgrade_tags": [
+        "infantry",
+        "cavalry"
+      ],
+      "unit_hp_mult": 1.08
+    }
+  },
+  "horse_breeding": {
+    "display_name": "Horse Breeding",
+    "tier": 2,
+    "cost": {
+      "gold": 900
+    },
+    "research_time": 38,
+    "requirements": {
+      "building": "research_hall",
+      "building_level": 2
+    },
+    "effects": {
+      "cavalry_speed_mult": 1.08,
+      "cavalry_charge_damage_add": 8
+    }
+  },
+  "siege_engineering": {
+    "display_name": "Siege Engineering",
+    "tier": 2,
+    "cost": {
+      "gold": 1050
+    },
+    "research_time": 44,
+    "requirements": {
+      "building": "research_hall",
+      "building_level": 2
+    },
+    "effects": {
+      "siege_damage_die_upgrade": 1,
+      "siege_range_add": 80,
+      "building_damage_mult": 1.15
+    }
   },
   "reinforced_walls": {
     "display_name": "Reinforced Walls",
-    "cost": {"gold": 700},
+    "tier": 2,
+    "cost": {
+      "gold": 700
+    },
     "research_time": 30,
-    "effects": {"wall_hp_mult": 1.25, "wall_armor_die_upgrade": 1}
+    "requirements": {
+      "building": "research_hall",
+      "building_level": 2
+    },
+    "effects": {
+      "wall_hp_mult": 1.25,
+      "building_hp_mult": 1.08,
+      "wall_armor_die_upgrade": 1
+    }
+  },
+  "tower_watch": {
+    "display_name": "Tower Watch",
+    "tier": 2,
+    "cost": {
+      "gold": 650
+    },
+    "research_time": 28,
+    "requirements": {
+      "building": "research_hall",
+      "building_level": 2
+    },
+    "effects": {
+      "tower_range_add": 90,
+      "tower_attack_modifier_add": 1
+    }
   },
   "veteran_drills": {
     "display_name": "Veteran Drills",
-    "cost": {"gold": 650},
-    "research_time": 28,
-    "effects": {"global_modifier": "veteran_drills_buff"}
+    "tier": 3,
+    "cost": {
+      "gold": 1100
+    },
+    "research_time": 42,
+    "requirements": {
+      "building": "research_hall",
+      "building_level": 3
+    },
+    "effects": {
+      "global_attack_modifier_add": 1,
+      "global_defence_modifier_add": 1
+    }
+  },
+  "royal_logistics": {
+    "display_name": "Royal Logistics",
+    "tier": 3,
+    "cost": {
+      "gold": 1200
+    },
+    "research_time": 46,
+    "requirements": {
+      "building": "research_hall",
+      "building_level": 3
+    },
+    "effects": {
+      "economy_gold_income_mult": 1.12,
+      "production_speed_mult": 1.12,
+      "command_limit_add": 40
+    }
   }
 }

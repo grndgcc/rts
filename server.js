@@ -17,6 +17,7 @@ function makeRoom(id) {
     id,
     seed: Math.floor(Math.random() * 999999999),
     clients: new Map(),
+    factions: {},
     commands: [],
     createdAt: Date.now()
   };
@@ -45,12 +46,16 @@ wss.on("connection", ws => {
       if (!rooms.has(roomId)) rooms.set(roomId, makeRoom(roomId));
       const room = rooms.get(roomId);
       if (room.clients.size >= 2) return send(ws, { type: "error", error: "room_full" });
+      if (msg.seed && room.clients.size === 0) room.seed = Number(msg.seed) || room.seed;
       joinedRoom = room;
       const playerId = room.clients.size + 1;
-      room.clients.set(clientId, { ws, clientId, playerId });
-      send(ws, { type: "joined", roomId, clientId, playerId, seed: room.seed });
-      broadcast(room, { type: "room_state", players: [...room.clients.values()].map(c => ({ clientId: c.clientId, playerId: c.playerId })) });
-      if (room.clients.size === 2) broadcast(room, { type: "start", seed: room.seed, startTick: 90 });
+      const factionId = String(msg.factionId || "elf_kingdom");
+      room.factions[playerId] = factionId;
+      room.clients.set(clientId, { ws, clientId, playerId, factionId });
+      send(ws, { type: "joined", roomId, clientId, playerId, seed: room.seed, factions: room.factions });
+      broadcast(room, { type: "remote_faction", playerId, factionId });
+      broadcast(room, { type: "room_state", players: [...room.clients.values()].map(c => ({ clientId: c.clientId, playerId: c.playerId, factionId: c.factionId })) });
+      if (room.clients.size === 2) broadcast(room, { type: "start", seed: room.seed, startTick: 90, factions: room.factions });
       return;
     }
 
@@ -58,7 +63,7 @@ wss.on("connection", ws => {
 
     if (msg.type === "command") {
       // Client şu formatta komut gönderir:
-      // {type:"command", tick:1234, command:{...}}
+      // {type:"command", tick:1234, command:{type:"unit_order"|"build"|"train_unit"|"research"|...}}
       const client = joinedRoom.clients.get(clientId);
       const packet = { type: "command", tick: msg.tick, playerId: client.playerId, command: msg.command };
       joinedRoom.commands.push(packet);

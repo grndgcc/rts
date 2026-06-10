@@ -8,21 +8,76 @@
 </head>
 <body>
   <div id="bootScreen">
-    <div class="boot-card">
+    <div class="boot-card boot-card-wide">
       <h1>Realm Siege</h1>
-      <p>Flat-folder JavaScript RTS prototype · v0.2 fast battalion combat</p>
+      <p>Flat-folder JavaScript RTS prototype · v0.3 faction select / tech / multiplayer logic</p>
+
+      <div class="boot-grid">
+        <label>
+          Oyun modu
+          <select id="modeSelect">
+            <option value="singleplayer">Singleplayer vs AI</option>
+            <option value="multiplayer_host">Multiplayer Host / Player 1</option>
+            <option value="multiplayer_join">Multiplayer Join / Player 2</option>
+          </select>
+        </label>
+
+        <label>
+          Senin ülken
+          <select id="playerFactionSelect"></select>
+        </label>
+
+        <label>
+          Rakip ülke
+          <select id="enemyFactionSelect"></select>
+        </label>
+
+        <label>
+          Harita
+          <select id="mapSelect"></select>
+        </label>
+
+        <label>
+          AI zorluğu
+          <select id="aiDifficultySelect">
+            <option value="easy">Easy</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Hard</option>
+          </select>
+        </label>
+
+        <label>
+          Seed
+          <input id="seedInput" type="number" value="1337" />
+        </label>
+      </div>
+
+      <div id="multiplayerOptions" class="multiplayer-options">
+        <label>
+          Server URL
+          <input id="serverUrlInput" value="ws://localhost:8787" />
+        </label>
+        <label>
+          Room ID
+          <input id="roomIdInput" value="test-room" />
+        </label>
+        <small>Multiplayer için önce bilgisayarda <b>npm install</b> ve <b>npm start</b> ile server.js çalıştırılır. GitHub Pages sadece client tarafını açar.</small>
+      </div>
+
       <button id="startBtn">Oyunu Başlat</button>
-      <small>GitHub Pages üzerinde direkt çalışır. Yerelde JSON fetch engellenirse gömülü yedek veri ile açılır.</small>
+      <div id="bootStatus">Data yükleniyor...</div>
+      <small>Dosyalar ana dizinde tutulur. Ülkeler, birimler, binalar, hero'lar ve teknolojiler JSON dosyalarından düzenlenir.</small>
     </div>
   </div>
 
   <canvas id="gameCanvas"></canvas>
 
   <div id="topbar">
-    <div><b>Realm Siege</b> <span id="versionTag">v0.2</span></div>
+    <div><b>Realm Siege</b> <span id="versionTag">v0.3</span></div>
     <div>Gold: <b id="goldText">0</b></div>
     <div>CP: <b id="cpText">0/0</b></div>
-    <div>Faction: <b id="factionText">Elf Kingdom</b></div>
+    <div>Faction: <b id="factionText">-</b></div>
+    <div>Mode: <b id="modeText">-</b></div>
     <div id="statusText">Hazır</div>
   </div>
 
@@ -34,6 +89,8 @@
     WASD / oklar: kamera<br>
     Q W E R: hero yetenekleri<br>
     Space: seçili hero’ya kamera<br>
+    <br><b>Tech</b><br>
+    Research Hall kur, binaya tıkla, teknoloji araştır.
   </div>
 
   <div id="panel">

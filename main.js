@@ -130,6 +130,7 @@
     gold: document.getElementById("goldText"),
     cp: document.getElementById("cpText"),
     faction: document.getElementById("factionText"),
+    mode: document.getElementById("modeText"),
     status: document.getElementById("statusText")
   };
   const panelTitle = document.getElementById("panelTitle");
@@ -157,11 +158,14 @@
     effects: [],
     outposts: [],
     settlements: [],
-    assets: { unitImages: {} },
+    assets: { unitImages: {}, mapBackground: null },
+    settings: { mode: "singleplayer", playerFaction: "elf_kingdom", enemyFaction: "kingdom_of_darkness", mapId: "duel_plains", seed: 1337, aiDifficulty: "normal" },
+    localPlayerId: 1,
+    net: { enabled: false, connected: false, ws: null, roomId: "", serverUrl: "", clientId: null },
     selected: [],
     selectionType: "none",
     idSeq: 1,
-    ai: { buildTimer: 0, trainTimer: 0, attackTimer: 18, heroTimer: 8 }
+    ai: { buildTimer: 0, trainTimer: 0, attackTimer: 18, heroTimer: 8, difficulty: "normal" }
   };
 
   function nextId(prefix) { return `${prefix}_${game.idSeq++}`; }
@@ -199,6 +203,99 @@
     if (loaded) log(`${loaded} birim token görseli yüklendi.`);
   }
 
+  async function loadMapBackground() {
+    game.assets.mapBackground = null;
+    const map = game.map || game.data?.maps?.[game.settings.mapId] || Object.values(game.data?.maps || {})[0];
+    const file = map?.background_image;
+    if (!file) return;
+    await new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => { game.assets.mapBackground = img; resolve(); };
+      img.onerror = () => { log("Harita arkaplanı yüklenemedi: " + file); resolve(); };
+      img.src = `${file}?v=${Date.now()}`;
+    });
+    if (game.assets.mapBackground) log("Harita arkaplanı yüklendi: " + file);
+  }
+
+  function populateBootMenu() {
+    const factionSelects = [document.getElementById("playerFactionSelect"), document.getElementById("enemyFactionSelect")];
+    for (const select of factionSelects) {
+      if (!select) continue;
+      select.innerHTML = "";
+      for (const [id, faction] of Object.entries(game.data.factions || {})) {
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = faction.display_name || id;
+        select.appendChild(opt);
+      }
+    }
+    const playerSel = document.getElementById("playerFactionSelect");
+    const enemySel = document.getElementById("enemyFactionSelect");
+    if (playerSel && game.data.factions.elf_kingdom) playerSel.value = "elf_kingdom";
+    if (enemySel && game.data.factions.kingdom_of_darkness) enemySel.value = "kingdom_of_darkness";
+
+    const mapSel = document.getElementById("mapSelect");
+    if (mapSel) {
+      mapSel.innerHTML = "";
+      for (const [id, map] of Object.entries(game.data.maps || {})) {
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = map.display_name || id;
+        mapSel.appendChild(opt);
+      }
+    }
+
+    const modeSel = document.getElementById("modeSelect");
+    const mpOptions = document.getElementById("multiplayerOptions");
+    if (modeSel && mpOptions) {
+      const update = () => { mpOptions.style.display = modeSel.value === "singleplayer" ? "none" : "grid"; };
+      modeSel.addEventListener("change", update);
+      update();
+    }
+    const bootStatus = document.getElementById("bootStatus");
+    if (bootStatus) bootStatus.textContent = "Hazır. Ülke, harita ve mod seçebilirsin.";
+  }
+
+  function readBootOptions() {
+    const val = id => document.getElementById(id)?.value;
+    const mode = val("modeSelect") || "singleplayer";
+    return {
+      mode,
+      playerFaction: val("playerFactionSelect") || "elf_kingdom",
+      enemyFaction: val("enemyFactionSelect") || "kingdom_of_darkness",
+      mapId: val("mapSelect") || "duel_plains",
+      seed: Number(val("seedInput") || 1337),
+      aiDifficulty: val("aiDifficultySelect") || "normal",
+      serverUrl: val("serverUrlInput") || "ws://localhost:8787",
+      roomId: val("roomIdInput") || "test-room"
+    };
+  }
+
+  function localPlayerId() { return game.localPlayerId || 1; }
+  function getLocalPlayer() { return getPlayer(localPlayerId()); }
+  function isLocalPlayerId(id) { return id === localPlayerId(); }
+
+  function setPlayerFaction(playerId, factionId) {
+    const p = getPlayer(playerId);
+    const f = game.data.factions?.[factionId];
+    if (!p || !f) return;
+    p.factionId = factionId;
+    p.faction = f;
+  }
+
+  function refreshLocalFactionMapping() {
+    setPlayerFaction(localPlayerId(), game.settings.playerFaction);
+    const enemy = game.players.find(p => p.id !== localPlayerId());
+    if (enemy) setPlayerFaction(enemy.id, game.settings.enemyFaction);
+  }
+
+  function focusOwnBase() {
+    const ownBase = game.bases.find(b => b.playerId === localPlayerId()) || game.bases[0];
+    if (!ownBase) return;
+    game.camera.x = ownBase.x - window.innerWidth / 2 / game.camera.zoom;
+    game.camera.y = ownBase.y - window.innerHeight / 2 / game.camera.zoom;
+  }
+
   function resizeCanvas() {
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.floor(window.innerWidth * dpr);
@@ -211,26 +308,39 @@
   window.addEventListener("resize", resizeCanvas);
   resizeCanvas();
 
-  document.getElementById("startBtn").addEventListener("click", async () => {
-    document.getElementById("bootScreen").style.display = "none";
+  async function bootstrap() {
     game.data = await loadData();
+    populateBootMenu();
     await loadUnitImages();
-    initGame();
+  }
+
+  document.getElementById("startBtn").addEventListener("click", async () => {
+    if (!game.data) await bootstrap();
+    const options = readBootOptions();
+    document.getElementById("bootScreen").style.display = "none";
+    initGame(options);
   });
 
-  function initGame() {
-    game.rng = new RNG(game.data.rules.simulation.seed || 1337);
-    game.map = game.data.maps.duel_plains || Object.values(game.data.maps)[0];
+  bootstrap();
+
+  function initGame(options = {}) {
+    game.settings = { ...game.settings, ...options };
+    game.rng = new RNG(game.settings.seed || game.data.rules.simulation.seed || 1337);
+    game.map = game.data.maps[game.settings.mapId] || game.data.maps.duel_plains || Object.values(game.data.maps)[0];
+    const multiplayer = game.settings.mode !== "singleplayer";
+    game.localPlayerId = game.settings.mode === "multiplayer_join" ? 2 : 1;
+    game.ai.difficulty = game.settings.aiDifficulty || "normal";
     game.players = [
-      makePlayer(1, "Human", "elf_kingdom", false),
-      makePlayer(2, "AI", "kingdom_of_darkness", true)
+      makePlayer(1, multiplayer && game.localPlayerId === 2 ? "Remote Player" : "Player 1", game.localPlayerId === 1 ? game.settings.playerFaction : game.settings.enemyFaction, false),
+      makePlayer(2, multiplayer && game.localPlayerId === 1 ? "Remote Player" : (multiplayer ? "Player 2" : "AI"), game.localPlayerId === 2 ? game.settings.playerFaction : game.settings.enemyFaction, !multiplayer)
     ];
     setupMap();
-    game.camera.x = 0;
-    game.camera.y = game.map.size.height / 2 - window.innerHeight / 2;
+    loadMapBackground();
+    focusOwnBase();
     game.running = true;
     game.lastTime = performance.now();
-    log("Oyun başladı. İlk hedef: slotlara bina kur, birlik üret, merkezi ele geçir.");
+    log(`Oyun başladı. Mod: ${game.settings.mode}. Yerel oyuncu: P${localPlayerId()}.`);
+    if (multiplayer) setupMultiplayer(game.settings);
     requestAnimationFrame(frame);
   }
 
@@ -251,6 +361,133 @@
       defeated: false
     };
   }
+
+
+  function setupMultiplayer(options) {
+    game.net.enabled = true;
+    game.net.serverUrl = options.serverUrl;
+    game.net.roomId = options.roomId;
+    try {
+      const ws = new WebSocket(options.serverUrl);
+      game.net.ws = ws;
+      ws.addEventListener("open", () => {
+        game.net.connected = true;
+        log("Multiplayer server bağlantısı açıldı.");
+        ws.send(JSON.stringify({
+          type: "join",
+          roomId: options.roomId,
+          factionId: options.playerFaction,
+          localPlayerHint: localPlayerId(),
+          seed: options.seed
+        }));
+      });
+      ws.addEventListener("message", e => handleNetworkMessage(e.data));
+      ws.addEventListener("close", () => { game.net.connected = false; log("Multiplayer bağlantısı kapandı."); });
+      ws.addEventListener("error", () => log("Multiplayer server bulunamadı. Yerel simülasyon devam ediyor."));
+    } catch (err) {
+      log("Multiplayer başlatılamadı: " + err.message);
+    }
+  }
+
+  function handleNetworkMessage(raw) {
+    let msg;
+    try { msg = JSON.parse(raw); } catch { return; }
+    if (msg.type === "hello") {
+      game.net.clientId = msg.clientId;
+      return;
+    }
+    if (msg.type === "joined") {
+      // Host P1, join P2 mantığı korunur; server farklı atarsa kamera/komut sahibi düzeltilir.
+      if (msg.playerId && msg.playerId !== localPlayerId()) {
+        game.localPlayerId = msg.playerId;
+        refreshLocalFactionMapping();
+        focusOwnBase();
+        log(`Server oyuncu slotunu P${msg.playerId} olarak atadı.`);
+      }
+      if (msg.factions) {
+        for (const [pid, fid] of Object.entries(msg.factions)) setPlayerFaction(Number(pid), fid);
+      }
+      if (msg.seed) log(`Room ${msg.roomId} seed: ${msg.seed}`);
+      return;
+    }
+    if (msg.type === "room_state") {
+      log(`Room oyuncuları: ${msg.players.map(p => 'P' + p.playerId).join(', ')}`);
+      return;
+    }
+    if (msg.type === "remote_faction") {
+      const p = getPlayer(msg.playerId);
+      if (p && game.data.factions[msg.factionId]) {
+        p.factionId = msg.factionId;
+        p.faction = game.data.factions[msg.factionId];
+        log(`P${msg.playerId} ülkesi: ${p.faction.display_name}`);
+      }
+      return;
+    }
+    if (msg.type === "start") {
+      if (msg.factions) {
+        for (const [pid, fid] of Object.entries(msg.factions)) setPlayerFaction(Number(pid), fid);
+      }
+      log("Multiplayer room iki oyuncuyla hazır.");
+      return;
+    }
+    if (msg.type === "command") {
+      if (msg.playerId === localPlayerId()) return;
+      executeCommand(msg.command, msg.playerId, true);
+      return;
+    }
+    if (msg.type === "player_left") log("Rakip odadan ayrıldı.");
+  }
+
+  function sendCommand(command) {
+    const actorId = localPlayerId();
+    executeCommand(command, actorId, false);
+    if (game.net.enabled && game.net.connected && game.net.ws?.readyState === WebSocket.OPEN) {
+      game.net.ws.send(JSON.stringify({ type: "command", tick: game.tick + 2, command }));
+    }
+  }
+
+  function executeCommand(command, actorId, remote = false) {
+    if (!command || !actorId) return;
+    if (command.type === "build") {
+      const slot = game.slots.find(s => s.id === command.slotId);
+      if (slot) buildInSlot(slot, command.buildingKind, actorId, remote);
+    }
+    if (command.type === "upgrade_building") {
+      const b = game.buildings.find(x => x.id === command.buildingId);
+      if (b) upgradeBuilding(b, actorId, remote);
+    }
+    if (command.type === "repair_building") {
+      const b = game.buildings.find(x => x.id === command.buildingId);
+      if (b) repairBuilding(b, actorId, remote);
+    }
+    if (command.type === "train_unit") {
+      const b = game.buildings.find(x => x.id === command.buildingId);
+      if (b) trainUnit(b, command.unitKind, actorId, remote);
+    }
+    if (command.type === "train_hero") {
+      const b = game.buildings.find(x => x.id === command.buildingId);
+      if (b) trainHero(b, command.heroKind, actorId, remote);
+    }
+    if (command.type === "research") {
+      const b = game.buildings.find(x => x.id === command.buildingId);
+      if (b) researchTechnology(b, command.researchId, actorId, remote);
+    }
+    if (command.type === "unit_order") {
+      issueUnitOrder(command.unitIds || [], command.x, command.y, command.targetId || null, actorId);
+    }
+    if (command.type === "cast_ability") {
+      const hero = game.units.find(u => u.id === command.heroId && u.isHero);
+      if (hero) castAbility(hero, command.abilityId, { x: command.x, y: command.y }, actorId, remote);
+    }
+  }
+
+  function requestBuildInSlot(slot, buildingKind) { sendCommand({ type: "build", slotId: slot.id, buildingKind }); }
+  function requestUpgradeBuilding(building) { sendCommand({ type: "upgrade_building", buildingId: building.id }); }
+  function requestRepairBuilding(building) { sendCommand({ type: "repair_building", buildingId: building.id }); }
+  function requestTrainUnit(building, unitKind) { sendCommand({ type: "train_unit", buildingId: building.id, unitKind }); }
+  function requestTrainHero(building, heroKind) { sendCommand({ type: "train_hero", buildingId: building.id, heroKind }); }
+  function requestResearch(building, researchId) { sendCommand({ type: "research", buildingId: building.id, researchId }); }
+  function requestCastAbility(hero, abilityId) { sendCommand({ type: "cast_ability", heroId: hero.id, abilityId, x: game.mouse.wx, y: game.mouse.wy }); }
 
   function setupMap() {
     game.bases = [];
@@ -303,14 +540,14 @@
       }
     }
 
-    const p1Base = game.bases.find(b => b.playerId === 1);
-    const p2Base = game.bases.find(b => b.playerId === 2);
-    spawnBattalion(1, "heavy_infantry", p1Base.x + 180, p1Base.y - 70);
-    spawnBattalion(1, "archer", p1Base.x + 180, p1Base.y + 70);
-    spawnHero(1, "eldarenth", p1Base.x + 120, p1Base.y);
-    spawnBattalion(2, "skirmisher", p2Base.x - 180, p2Base.y - 80);
-    spawnBattalion(2, "archer", p2Base.x - 180, p2Base.y + 70);
-    spawnHero(2, "orc_champion", p2Base.x - 120, p2Base.y);
+    for (const player of game.players) {
+      const base = game.bases.find(b => b.playerId === player.id);
+      const dir = player.id === 1 ? 1 : -1;
+      spawnBattalion(player.id, "heavy_infantry", base.x + dir * 180, base.y - 75);
+      spawnBattalion(player.id, "archer", base.x + dir * 180, base.y + 75);
+      const firstHero = (player.faction.heroes || []).find(h => game.data.heroes[h]);
+      if (firstHero) spawnHero(player.id, firstHero, base.x + dir * 120, base.y);
+    }
   }
 
   function createCitadel(base) {
@@ -371,9 +608,10 @@
     return def.level_stats[String(building.level)] || def.level_stats[building.level];
   }
 
-  function buildInSlot(slot, buildingKind) {
-    const player = getPlayer(1);
-    if (slot.playerId !== 1 && slot.playerId !== 0) return;
+  function buildInSlot(slot, buildingKind, actorPlayerId = localPlayerId(), remote = false) {
+    const player = getPlayer(actorPlayerId);
+    if (!player) return;
+    if (slot.playerId !== actorPlayerId && slot.playerId !== 0) return;
     if (slot.playerId === 0) return log("Önce bu neutral settlement'ı ele geçir.");
     if (slot.buildingId) return;
     const def = getBuildingDef(buildingKind);
@@ -386,6 +624,8 @@
     if (player.gold < cost) return log("Yetersiz gold.");
     player.gold -= cost;
     const levelStats = def.level_stats["1"] || def.level_stats[1];
+    const research = getResearchEffects(player);
+    const maxHp = Math.round(levelStats.hp * (research.building_hp_mult || 1));
     const building = {
       id: nextId("building"),
       kind: buildingKind,
@@ -396,8 +636,8 @@
       radius: slot.wall ? 26 : 38,
       level: 1,
       maxLevel: def.max_level || 3,
-      hp: levelStats.hp * 0.12,
-      maxHp: levelStats.hp,
+      hp: maxHp * 0.12,
+      maxHp,
       armorDie: levelStats.armor_die,
       built: false,
       buildProgress: 0,
@@ -410,13 +650,15 @@
     };
     game.buildings.push(building);
     slot.buildingId = building.id;
-    log(`${def.display_name} inşaatı başladı.`);
-    selectSingle(building);
+    if (isLocalPlayerId(actorPlayerId)) {
+      log(`${def.display_name} inşaatı başladı.`);
+      selectSingle(building);
+    }
   }
 
-  function upgradeBuilding(building) {
-    const player = getPlayer(building.playerId);
-    if (building.playerId !== 1 || building.kind === "citadel") return;
+  function upgradeBuilding(building, actorPlayerId = localPlayerId(), remote = false) {
+    const player = getPlayer(actorPlayerId);
+    if (!player || building.playerId !== actorPlayerId || building.kind === "citadel") return;
     const def = getBuildingDef(building.kind);
     if (building.level >= (def.max_level || 3)) return log("Bina zaten son seviyede.");
     const cost = Math.round((def.cost?.gold || 400) * 0.75 * building.level);
@@ -425,17 +667,20 @@
     building.level++;
     const stats = getBuildingLevelStats(building);
     const hpRatio = building.hp / building.maxHp;
-    building.maxHp = stats.hp;
+    const research = getResearchEffects(player);
+    building.maxHp = Math.round(stats.hp * (research.building_hp_mult || 1));
     building.hp = Math.max(1, Math.round(building.maxHp * hpRatio + building.maxHp * 0.18));
     building.armorDie = stats.armor_die;
     building.attack = stats.attack || null;
-    log(`${building.displayName} seviye ${building.level} oldu.`);
-    updatePanel();
+    if (isLocalPlayerId(actorPlayerId)) {
+      log(`${building.displayName} seviye ${building.level} oldu.`);
+      updatePanel();
+    }
   }
 
-  function repairBuilding(building) {
-    if (building.playerId !== 1) return;
-    const player = getPlayer(1);
+  function repairBuilding(building, actorPlayerId = localPlayerId(), remote = false) {
+    if (building.playerId !== actorPlayerId) return;
+    const player = getPlayer(actorPlayerId);
     if (building.hp >= building.maxHp) return log("Tamir gerekmiyor.");
     let baseCost = 900;
     if (building.kind !== "citadel") baseCost = getBuildingDef(building.kind)?.cost?.gold || 600;
@@ -444,13 +689,15 @@
     if (player.gold < cost) return log("Yetersiz gold.");
     player.gold -= cost;
     building.hp = building.maxHp;
-    log(`${building.displayName} ${cost} gold karşılığında tamir edildi.`);
-    updatePanel();
+    if (isLocalPlayerId(actorPlayerId)) {
+      log(`${building.displayName} ${cost} gold karşılığında tamir edildi.`);
+      updatePanel();
+    }
   }
 
-  function trainUnit(building, unitKind) {
-    const player = getPlayer(building.playerId);
-    if (building.playerId !== 1 && !player.isAI) return;
+  function trainUnit(building, unitKind, actorPlayerId = building.playerId, remote = false) {
+    const player = getPlayer(actorPlayerId);
+    if (!player || building.playerId !== actorPlayerId) return;
     const def = getUnitDef(unitKind);
     if (!def || !building.built) return;
     const cost = computeCost(player, def, def.category);
@@ -459,14 +706,16 @@
     if (player.commandUsed + cp > player.commandLimit) return log("Command point limiti dolu.");
     player.gold -= cost;
     const levelStats = getBuildingLevelStats(building);
-    const speedMod = levelStats?.production_speed_modifier || 1;
+    const research = getResearchEffects(player);
+    const speedMod = (levelStats?.production_speed_modifier || 1) * (research.production_speed_mult || 1);
     building.queue.push({ type: "unit", kind: unitKind, progress: 0, time: (def.build_time || 20) / speedMod });
-    if (building.playerId === 1) log(`${def.display_name} üretim kuyruğuna eklendi.`);
+    if (isLocalPlayerId(building.playerId)) log(`${def.display_name} üretim kuyruğuna eklendi.`);
     updatePanel();
   }
 
-  function trainHero(building, heroKind) {
-    const player = getPlayer(building.playerId);
+  function trainHero(building, heroKind, actorPlayerId = building.playerId, remote = false) {
+    const player = getPlayer(actorPlayerId);
+    if (!player || building.playerId !== actorPlayerId) return;
     const def = getHeroDef(heroKind);
     if (!def || !building.built) return;
     if (def.faction !== player.factionId) return;
@@ -476,8 +725,114 @@
     player.gold -= cost;
     player.heroBuilt.add(heroKind);
     building.queue.push({ type: "hero", kind: heroKind, progress: 0, time: def.build_time || 35 });
-    if (building.playerId === 1) log(`${def.display_name} çağrılıyor.`);
+    if (isLocalPlayerId(building.playerId)) log(`${def.display_name} çağrılıyor.`);
     updatePanel();
+  }
+
+
+  function getResearchCost(player, researchDef) {
+    let cost = researchDef.cost?.gold || 0;
+    if (player.faction.modifiers?.research_cost_mult) cost *= player.faction.modifiers.research_cost_mult;
+    return Math.ceil(cost);
+  }
+
+  function isResearchQueued(playerId, researchId) {
+    return game.buildings.some(b => b.playerId === playerId && b.queue?.some(q => q.type === "research" && q.kind === researchId));
+  }
+
+  function researchRequirementsMet(player, building, researchDef) {
+    const req = researchDef.requirements || {};
+    if (req.building && building.kind !== req.building) return false;
+    if (req.building_level && building.level < req.building_level) return false;
+    if (req.requires_research && !player.researched.has(req.requires_research)) return false;
+    return true;
+  }
+
+  function researchTechnology(building, researchId, actorPlayerId = building.playerId, remote = false) {
+    const player = getPlayer(actorPlayerId);
+    const def = game.data.researches?.[researchId];
+    if (!player || !def || building.playerId !== actorPlayerId || !building.built) return;
+    if (player.researched.has(researchId)) return log("Bu teknoloji zaten araştırıldı.");
+    if (isResearchQueued(actorPlayerId, researchId)) return log("Bu teknoloji zaten araştırma kuyruğunda.");
+    if (!researchRequirementsMet(player, building, def)) return log("Teknoloji şartları karşılanmıyor.");
+    const cost = getResearchCost(player, def);
+    if (player.gold < cost) return log("Yetersiz gold.");
+    player.gold -= cost;
+    building.queue.push({ type: "research", kind: researchId, progress: 0, time: def.research_time || 30 });
+    if (isLocalPlayerId(actorPlayerId)) log(`${def.display_name} araştırması başladı.`);
+    updatePanel();
+  }
+
+  function completeResearch(playerId, researchId) {
+    const player = getPlayer(playerId);
+    const def = game.data.researches?.[researchId];
+    if (!player || !def || player.researched.has(researchId)) return;
+    player.researched.add(researchId);
+    applyResearchCompletion(player, def);
+    if (isLocalPlayerId(playerId)) {
+      log(`${def.display_name} tamamlandı.`);
+      updatePanel();
+    }
+  }
+
+  function getResearchEffects(player) {
+    const result = {};
+    if (!player?.researched) return result;
+    for (const id of player.researched) {
+      const e = game.data.researches?.[id]?.effects || {};
+      for (const [k, v] of Object.entries(e)) {
+        if (Array.isArray(v)) result[k] = [...new Set([...(result[k] || []), ...v])];
+        else if (typeof v === "number") result[k] = k.endsWith("_mult") ? (result[k] || 1) * v : (result[k] || 0) + v;
+        else result[k] = v;
+      }
+    }
+    return result;
+  }
+
+  function applyResearchCompletion(player, researchDef) {
+    const e = researchDef.effects || {};
+    if (e.command_limit_add) player.commandLimit = Math.min(game.data.rules.resources.max_command_limit || 300, player.commandLimit + e.command_limit_add);
+    if (e.unit_hp_mult) {
+      for (const u of game.units) {
+        if (u.playerId !== player.id || u.isHero) continue;
+        const oldMax = u.maxHp;
+        u.memberHp = Math.round(u.memberHp * e.unit_hp_mult);
+        for (const m of u.members || []) {
+          m.maxHp = Math.round(m.maxHp * e.unit_hp_mult);
+          m.hp = Math.round(m.hp * e.unit_hp_mult);
+        }
+        syncBattalionHp(u);
+        u.maxHp = Math.round(oldMax * e.unit_hp_mult);
+      }
+    }
+    if (e.building_hp_mult) {
+      for (const b of game.buildings) {
+        if (b.playerId !== player.id) continue;
+        const old = b.maxHp;
+        b.maxHp = Math.round(b.maxHp * e.building_hp_mult);
+        b.hp = Math.round(b.hp + (b.maxHp - old));
+      }
+    }
+    if (e.wall_hp_mult) {
+      for (const base of game.bases) {
+        if (base.playerId !== player.id) continue;
+        const old = base.wallMaxHp;
+        base.wallMaxHp = Math.round(base.wallMaxHp * e.wall_hp_mult);
+        base.wallHp = Math.round(base.wallHp + (base.wallMaxHp - old));
+      }
+    }
+    if (e.wall_armor_die_upgrade) {
+      for (const base of game.bases) {
+        if (base.playerId === player.id) base.wallArmorDie = upgradeDie(base.wallArmorDie, e.wall_armor_die_upgrade);
+      }
+    }
+  }
+
+  function applyResearchToSpawnStats(player, stats, tags) {
+    const e = getResearchEffects(player);
+    const s = deepClone(stats);
+    if (e.unit_hp_mult) s.hp = Math.round(s.hp * e.unit_hp_mult);
+    return s;
   }
 
   function computeCost(player, def, category) {
@@ -492,8 +847,8 @@
     const def = getUnitDef(unitKind);
     if (!def) return null;
     const count = def.battalion_size || game.data.rules.battalions.default_size;
-    const stats = deepClone(def.stats);
     const player = getPlayer(playerId);
+    const stats = applyResearchToSpawnStats(player, def.stats, def.tags || []);
     const hpMax = stats.hp * count;
     const unit = {
       id: nextId("unit"),
@@ -638,6 +993,8 @@
         if (o.ownerId === player.id) income += o.income?.gold_per_minute || 0;
       }
       if (player.faction.modifiers?.resource_income_mult) income *= player.faction.modifiers.resource_income_mult;
+      const research = getResearchEffects(player);
+      if (research.economy_gold_income_mult) income *= research.economy_gold_income_mult;
       player.gold += income * dt / 60;
     }
   }
@@ -650,7 +1007,7 @@
         if (b.buildProgress >= 1) {
           b.built = true;
           b.hp = b.maxHp;
-          if (b.playerId === 1) log(`${b.displayName} tamamlandı.`);
+          if (isLocalPlayerId(b.playerId)) log(`${b.displayName} tamamlandı.`);
         }
         continue;
       }
@@ -662,7 +1019,9 @@
           const spawn = findSpawnPointNear(b.x, b.y, b.playerId);
           if (item.type === "unit") spawnBattalion(b.playerId, item.kind, spawn.x, spawn.y);
           if (item.type === "hero") spawnHero(b.playerId, item.kind, spawn.x, spawn.y);
-          if (b.playerId === 1) log(`${item.kind} hazır.`);
+          if (item.type === "research") {
+            completeResearch(b.playerId, item.kind);
+          } else if (isLocalPlayerId(b.playerId)) log(`${item.kind} hazır.`);
         }
       }
     }
@@ -826,6 +1185,22 @@
     if (entity.unitType === "heavy_infantry" && factionMods.heavy_infantry_defence_modifier_add) s.defence_modifier += factionMods.heavy_infantry_defence_modifier_add;
     if (entity.unitType === "heavy_cavalry" && factionMods.heavy_cavalry_charge_damage_add) s.charge_damage += factionMods.heavy_cavalry_charge_damage_add;
 
+    const research = getResearchEffects(player);
+    if (entity.tags?.includes("melee") && research.melee_damage_die_upgrade) s.damage_die = upgradeDie(s.damage_die, research.melee_damage_die_upgrade);
+    if (entity.tags?.includes("ranged") && research.ranged_damage_die_upgrade) s.damage_die = upgradeDie(s.damage_die, research.ranged_damage_die_upgrade);
+    if (entity.tags?.includes("ranged") && research.ranged_attack_modifier_add) s.attack_modifier += research.ranged_attack_modifier_add;
+    if (entity.tags?.includes("siege") && research.siege_damage_die_upgrade) s.damage_die = upgradeDie(s.damage_die, research.siege_damage_die_upgrade);
+    if (entity.tags?.includes("siege") && research.siege_range_add) s.range += research.siege_range_add;
+    if (entity.tags?.includes("cavalry") && research.cavalry_charge_damage_add) s.charge_damage += research.cavalry_charge_damage_add;
+    if (entity.tags?.includes("cavalry") && research.cavalry_speed_mult) s.speed *= research.cavalry_speed_mult;
+    if (research.global_attack_modifier_add) s.attack_modifier += research.global_attack_modifier_add;
+    if (research.global_defence_modifier_add) s.defence_modifier += research.global_defence_modifier_add;
+    if (research.armor_die_upgrade_tags && hasAnyTag(entity, research.armor_die_upgrade_tags)) s.armor_die = upgradeDie(s.armor_die, 1);
+    if (entity.tags?.includes("tower")) {
+      if (research.tower_range_add) s.range += research.tower_range_add;
+      if (research.tower_attack_modifier_add) s.attack_modifier += research.tower_attack_modifier_add;
+    }
+
     let speedMult = 1;
     for (const active of entity.activeModifiers || []) {
       const mod = game.data.modifiers[active.id];
@@ -877,9 +1252,18 @@
   }
 
   function getBuildingAttack(b) {
-    if (b.kind === "citadel") return b.attack;
-    const stats = getBuildingLevelStats(b);
-    return stats?.can_attack ? stats.attack : null;
+    let attack = null;
+    if (b.kind === "citadel") attack = b.attack;
+    else {
+      const stats = getBuildingLevelStats(b);
+      attack = stats?.can_attack ? stats.attack : null;
+    }
+    if (!attack) return null;
+    attack = { ...attack };
+    const research = getResearchEffects(getPlayer(b.playerId));
+    if (b.tags?.includes("tower") && research.tower_range_add) attack.range += research.tower_range_add;
+    if (b.tags?.includes("tower") && research.tower_attack_modifier_add) attack.attack_modifier += research.tower_attack_modifier_add;
+    return attack;
   }
 
   function updateBuildingsCombat(dt) {
@@ -966,6 +1350,8 @@
     let totalDamage = Math.max(rules.combat.minimum_damage, damageRoll - armorRoll);
     if (isCounter(attacker, defender)) totalDamage *= rules.combat.counter_damage_multiplier;
     if (attackCrit) totalDamage *= rules.combat.attack_crit_damage_multiplier;
+    const atkResearch = getResearchEffects(getPlayer(attacker.playerId));
+    if ((defender.tags?.includes("building") || defender.entityType === "building") && attacker.tags?.includes("siege") && atkResearch.building_damage_mult) totalDamage *= atkResearch.building_damage_mult;
 
     if (attacker.isCharging && attacker.chargeReady) {
       totalDamage += Math.round((atkStats.speed || 0) * rules.combat.charge_speed_damage_scale + (atkStats.charge_damage || 0));
@@ -997,8 +1383,8 @@
     }
     if (entity.hp <= 0) {
       entity.hp = 0;
-      if (entity.playerId === 1) log(`${entity.displayName} kaybedildi.`);
-      if (source?.playerId === 1) log(`${entity.displayName} yok edildi.`);
+      if (isLocalPlayerId(entity.playerId)) log(`${entity.displayName} kaybedildi.`);
+      if (source && isLocalPlayerId(source.playerId)) log(`${entity.displayName} yok edildi.`);
     }
     return applied;
   }
@@ -1084,26 +1470,28 @@
   }
 
   function updateAI(dt) {
-    const ai = getPlayer(2);
+    const ai = game.players.find(p => p.isAI);
     if (!ai || ai.defeated) return;
     game.ai.buildTimer -= dt;
     game.ai.trainTimer -= dt;
     game.ai.attackTimer -= dt;
     game.ai.heroTimer -= dt;
+    const diff = game.ai.difficulty;
+    const pace = diff === "hard" ? 0.72 : diff === "easy" ? 1.35 : 1;
     if (game.ai.buildTimer <= 0) {
-      game.ai.buildTimer = 6;
+      game.ai.buildTimer = 6 * pace;
       aiBuildLogic(ai);
     }
     if (game.ai.trainTimer <= 0) {
-      game.ai.trainTimer = 3;
+      game.ai.trainTimer = 3 * pace;
       aiTrainLogic(ai);
     }
     if (game.ai.heroTimer <= 0) {
-      game.ai.heroTimer = 18;
+      game.ai.heroTimer = 18 * pace;
       aiHeroLogic(ai);
     }
     if (game.ai.attackTimer <= 0) {
-      game.ai.attackTimer = 42;
+      game.ai.attackTimer = 42 * pace;
       aiAttackWave(ai);
     }
   }
@@ -1118,6 +1506,8 @@
     const slot = slots[0];
     ai.gold -= def.cost.gold;
     const levelStats = def.level_stats["1"] || def.level_stats[1];
+    const research = getResearchEffects(player);
+    const maxHp = Math.round(levelStats.hp * (research.building_hp_mult || 1));
     const building = { id: nextId("building"), kind, displayName: def.display_name, playerId: ai.id, x: slot.x, y: slot.y, radius: 38, level: 1, maxLevel: def.max_level || 3, hp: levelStats.hp * 0.25, maxHp: levelStats.hp, armorDie: levelStats.armor_die, built: false, buildProgress: 0.25, buildTime: def.build_time || 20, slotId: slot.id, queue: [], attackCooldown: 0, tags: ["building", def.category], attack: levelStats.attack || null };
     slot.buildingId = building.id;
     game.buildings.push(building);
@@ -1141,7 +1531,8 @@
   }
 
   function aiAttackWave(ai) {
-    const playerBase = game.bases.find(b => b.playerId === 1);
+    const enemyTargetId = game.localPlayerId || 1;
+    const playerBase = game.bases.find(b => b.playerId === enemyTargetId);
     const army = game.units.filter(u => u.playerId === ai.id);
     if (army.length < 3) return;
     for (const u of army) {
@@ -1184,10 +1575,19 @@
     const w = game.map.size.width, h = game.map.size.height;
     ctx.fillStyle = "#1f2a1b";
     ctx.fillRect(0, 0, w, h);
-    ctx.strokeStyle = "rgba(255,255,255,0.04)";
-    ctx.lineWidth = 1;
-    for (let x = 0; x < w; x += 120) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
-    for (let y = 0; y < h; y += 120) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+    if (game.assets.mapBackground) {
+      ctx.drawImage(game.assets.mapBackground, 0, 0, w, h);
+      ctx.fillStyle = "rgba(20, 16, 10, 0.10)";
+      ctx.fillRect(0, 0, w, h);
+    } else {
+      ctx.strokeStyle = "rgba(255,255,255,0.04)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 120) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+      for (let y = 0; y < h; y += 120) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+    }
+    ctx.strokeStyle = "rgba(255,255,255,0.16)";
+    ctx.lineWidth = 6;
+    ctx.strokeRect(0, 0, w, h);
     for (const d of game.map.decor || []) {
       if (d.type === "forest") {
         ctx.fillStyle = "rgba(25,70,33,0.5)";
@@ -1207,7 +1607,7 @@
       circle(o.position.x, o.position.y, o.capture_radius || 120, false);
       ctx.fillStyle = c;
       circle(o.position.x, o.position.y, 18, true);
-      drawWorldText(o.id, o.position.x, o.position.y - 32, "#f0eadc", 12);
+      drawWorldText(o.display_name || o.id, o.position.x, o.position.y - 32, "#f0eadc", 12);
       if (o.progress > 0) drawProgressBar(o.position.x - 40, o.position.y + 28, 80, 7, o.progress / 100, "#ddd");
     }
     for (const s of game.settlements) {
@@ -1217,7 +1617,7 @@
       circle(s.position.x, s.position.y, s.capture_radius || 160, false);
       ctx.fillStyle = "rgba(130,112,80,0.55)";
       circle(s.position.x, s.position.y, 45, true);
-      drawWorldText("Neutral Settlement", s.position.x, s.position.y - 60, "#f0eadc", 13);
+      drawWorldText(s.display_name || "Neutral Settlement", s.position.x, s.position.y - 60, "#f0eadc", 13);
       if (s.progress > 0) drawProgressBar(s.position.x - 50, s.position.y + 55, 100, 8, s.progress / 100, "#ddd");
     }
   }
@@ -1243,7 +1643,7 @@
       ctx.fillStyle = s.wall ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.05)";
       circle(s.x, s.y, s.radius, true);
       circle(s.x, s.y, s.radius, false);
-      if (s.playerId === 1) drawWorldText(s.wall ? "Tower" : "+", s.x, s.y + 4, "#f7ecd1", 13);
+      if (isLocalPlayerId(s.playerId)) drawWorldText(s.wall ? "Tower" : "+", s.x, s.y + 4, "#f7ecd1", 13);
     }
   }
 
@@ -1449,7 +1849,7 @@
   function selectByBox(a, b) {
     const x1 = Math.min(a.x, b.x), y1 = Math.min(a.y, b.y);
     const x2 = Math.max(a.x, b.x), y2 = Math.max(a.y, b.y);
-    const selected = game.units.filter(u => u.playerId === 1 && isAlive(u)).filter(u => {
+    const selected = game.units.filter(u => isLocalPlayerId(u.playerId) && isAlive(u)).filter(u => {
       const s = worldToScreen(u.x, u.y);
       return s.x >= x1 && s.x <= x2 && s.y >= y1 && s.y <= y2;
     });
@@ -1461,8 +1861,7 @@
   function selectAt(wx, wy) {
     const entity = pickEntity(wx, wy);
     if (entity) {
-      if (entity.playerId === 1 || entity.entityKind === "slot") selectSingle(entity);
-      else selectSingle(entity);
+      selectSingle(entity);
       return;
     }
     game.selected = [];
@@ -1497,19 +1896,27 @@
   function isSelected(e) { return game.selected.some(s => s.id === e.id); }
 
   function issueRightClickCommand(wx, wy) {
-    const selectedUnits = game.selected.filter(e => e.entityType === "unit" && e.playerId === 1);
+    const selectedUnits = game.selected.filter(e => e.entityType === "unit" && isLocalPlayerId(e.playerId));
     if (!selectedUnits.length) return;
     const target = pickEntity(wx, wy);
-    if (target && target.playerId && target.playerId !== 1 && target.entityKind !== "slot") {
-      const real = findEntityById(target.id) || target;
+    const command = { type: "unit_order", unitIds: selectedUnits.map(u => u.id), x: wx, y: wy };
+    if (target && target.playerId && !isLocalPlayerId(target.playerId) && target.entityKind !== "slot") command.targetId = target.id;
+    sendCommand(command);
+  }
+
+  function issueUnitOrder(unitIds, wx, wy, targetId, actorPlayerId) {
+    const selectedUnits = unitIds.map(id => game.units.find(u => u.id === id)).filter(u => u && u.playerId === actorPlayerId && isAlive(u));
+    if (!selectedUnits.length) return;
+    const target = targetId ? findEntityById(targetId) : null;
+    if (target && target.playerId !== actorPlayerId) {
       for (const u of selectedUnits) {
-        u.targetId = real.id;
-        u.targetX = real.x;
-        u.targetY = real.y;
+        u.targetId = target.id;
+        u.targetX = target.x;
+        u.targetY = target.y;
         u.isCharging = true;
         u.chargeReady = true;
       }
-      log(`${selectedUnits.length} birlik saldırı emri aldı.`);
+      if (isLocalPlayerId(actorPlayerId)) log(`${selectedUnits.length} birlik saldırı emri aldı.`);
     } else {
       const n = selectedUnits.length;
       const cols = Math.ceil(Math.sqrt(n));
@@ -1540,14 +1947,14 @@
     const owner = slot.playerId ? getPlayer(slot.playerId).name : "Neutral";
     panelTitle.textContent = slot.wall ? "Sur Kulesi Slotu" : "Bina Slotu";
     panelBody.innerHTML = `Sahip: <b>${owner}</b><br>Tür: ${slot.type}<br>${slot.buildingId ? "Bu slot dolu." : "Bu slot boş."}`;
-    if (slot.playerId !== 1 || slot.buildingId) return;
+    if (!isLocalPlayerId(slot.playerId) || slot.buildingId) return;
     const kinds = Object.keys(game.data.buildings).filter(k => {
       if (slot.wall) return k === "guard_tower";
       return true;
     });
     for (const kind of kinds) {
       const def = getBuildingDef(kind);
-      addButton(`${def.display_name} (${formatGold(def.cost)})`, () => buildInSlot(slot, kind));
+      addButton(`${def.display_name} (${formatGold(def.cost)})`, () => requestBuildInSlot(slot, kind));
     }
   }
 
@@ -1559,15 +1966,15 @@
     if (!b.built) html += `İnşaat: ${Math.round(b.buildProgress * 100)}%<br>`;
     if (b.queue?.length) html += `Kuyruk: ${b.queue.map(q => q.kind).join(", ")}<br>Aktif üretim: ${Math.round(b.queue[0].progress * 100)}%<br>`;
     panelBody.innerHTML = html;
-    if (b.playerId !== 1) return;
-    if (b.hp < b.maxHp) addButton("Tamir", () => repairBuilding(b));
-    if (b.kind !== "citadel" && b.built) addButton("Upgrade", () => upgradeBuilding(b));
+    if (!isLocalPlayerId(b.playerId)) return;
+    if (b.hp < b.maxHp) addButton("Tamir", () => requestRepairBuilding(b));
+    if (b.kind !== "citadel" && b.built) addButton("Upgrade", () => requestUpgradeBuilding(b));
     if (b.kind === "citadel" && b.built) {
-      const p = getPlayer(1);
+      const p = getLocalPlayer();
       for (const h of p.faction.heroes || []) {
         const def = getHeroDef(h);
         if (!def) continue;
-        addButton(`${def.display_name} (${formatGold(def.cost)})`, () => trainHero(b, h), p.heroBuilt.has(h));
+        addButton(`${def.display_name} (${formatGold(def.cost)})`, () => requestTrainHero(b, h), p.heroBuilt.has(h));
       }
     }
     if (b.kind !== "citadel" && b.built) {
@@ -1575,14 +1982,25 @@
       for (const u of def?.produces || []) {
         const unitDef = getUnitDef(u);
         if (!unitDef) continue;
-        const cost = computeCost(getPlayer(1), unitDef, unitDef.category);
-        addButton(`${unitDef.display_name} (${cost}g)`, () => trainUnit(b, u));
+        const cost = computeCost(getLocalPlayer(), unitDef, unitDef.category);
+        addButton(`${unitDef.display_name} (${cost}g)`, () => requestTrainUnit(b, u));
+      }
+      for (const r of def?.researches || []) {
+        const res = game.data.researches?.[r];
+        if (!res) continue;
+        const p = getLocalPlayer();
+        const done = p.researched.has(r);
+        const queued = isResearchQueued(p.id, r);
+        const reqOk = researchRequirementsMet(p, b, res);
+        const cost = getResearchCost(p, res);
+        const label = done ? `✓ ${res.display_name}` : `${res.display_name} (${cost}g)`;
+        addButton(label, () => requestResearch(b, r), done || queued || !reqOk);
       }
     }
   }
 
   function renderUnitPanel(units) {
-    const own = units.filter(u => u.playerId === 1);
+    const own = units.filter(u => isLocalPlayerId(u.playerId));
     const first = units[0];
     if (units.length > 1) {
       panelTitle.textContent = `${units.length} birlik seçildi`;
@@ -1598,7 +2016,7 @@
         const ab = game.data.abilities[abilityId];
         if (!ab) continue;
         const cd = hero.abilityCooldowns[abilityId] || 0;
-        addButton(`${ab.hotkey || ""} ${ab.display_name}${cd > 0 ? ` (${Math.ceil(cd)}s)` : ""}`, () => castAbility(hero, abilityId), cd > 0);
+        addButton(`${ab.hotkey || ""} ${ab.display_name}${cd > 0 ? ` (${Math.ceil(cd)}s)` : ""}`, () => requestCastAbility(hero, abilityId), cd > 0);
       }
     }
   }
@@ -1612,16 +2030,17 @@
   }
 
   function castHotkey(key) {
-    const hero = game.selected.find(u => u.isHero && u.playerId === 1);
+    const hero = game.selected.find(u => u.isHero && isLocalPlayerId(u.playerId));
     if (!hero) return;
     const abilityId = hero.abilities.find(id => game.data.abilities[id]?.hotkey === key);
-    if (abilityId) castAbility(hero, abilityId);
+    if (abilityId) requestCastAbility(hero, abilityId);
   }
 
-  function castAbility(hero, abilityId) {
+  function castAbility(hero, abilityId, targetPoint = { x: game.mouse.wx, y: game.mouse.wy }, actorPlayerId = hero.playerId, remote = false) {
+    if (!hero || hero.playerId !== actorPlayerId) return;
     const ab = game.data.abilities[abilityId];
     if (!ab || (hero.abilityCooldowns[abilityId] || 0) > 0) return;
-    const targetPoint = { x: game.mouse.wx, y: game.mouse.wy };
+    targetPoint = { x: targetPoint.x, y: targetPoint.y };
     if (ab.range && distance(hero, targetPoint) > ab.range) {
       const n = normalize(targetPoint.x - hero.x, targetPoint.y - hero.y);
       targetPoint.x = hero.x + n.x * ab.range;
@@ -1653,14 +2072,18 @@
         addRing(hero.x, hero.y, ab.radius || 300, "#9bffd1");
       }
       if (eff.type === "self_dash") {
-        const n = normalize(game.mouse.wx - hero.x, game.mouse.wy - hero.y);
+        const n = normalize(targetPoint.x - hero.x, targetPoint.y - hero.y);
         hero.x += n.x * (eff.distance || 100);
         hero.y += n.y * (eff.distance || 100);
       }
     }
-    hero.abilityCooldowns[abilityId] = ab.cooldown || 20;
-    log(`${hero.displayName}: ${ab.display_name}`);
-    updatePanel();
+    const player = getPlayer(hero.playerId);
+    const cdMult = player?.faction?.modifiers?.hero_ability_cooldown_mult || 1;
+    hero.abilityCooldowns[abilityId] = (ab.cooldown || 20) * cdMult;
+    if (isLocalPlayerId(hero.playerId)) {
+      log(`${hero.displayName}: ${ab.display_name}`);
+      updatePanel();
+    }
   }
 
   function areaDamage(source, x, y, radius, eff) {
@@ -1719,12 +2142,14 @@
   }
 
   function updateTopbar() {
-    const p = getPlayer(1);
+    const p = getLocalPlayer();
+    if (!p) return;
     topEls.gold.textContent = Math.floor(p.gold);
     topEls.cp.textContent = `${Math.floor(p.commandUsed)}/${p.commandLimit}`;
     topEls.faction.textContent = p.faction.display_name;
-    const enemyCitadel = game.buildings.find(b => b.playerId === 2 && b.kind === "citadel");
-    const ownCitadel = game.buildings.find(b => b.playerId === 1 && b.kind === "citadel");
+    topEls.mode.textContent = game.settings.mode;
+    const enemyCitadel = game.buildings.find(b => b.playerId !== localPlayerId() && b.kind === "citadel");
+    const ownCitadel = game.buildings.find(b => b.playerId === localPlayerId() && b.kind === "citadel");
     if (!enemyCitadel) topEls.status.textContent = "Zafer! Düşman citadel yok edildi.";
     else if (!ownCitadel) topEls.status.textContent = "Yenilgi. Citadel yok edildi.";
     else topEls.status.textContent = `Tick ${game.tick}`;
